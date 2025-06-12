@@ -1,15 +1,20 @@
-#include <iostream>
-
+#include <ncurses.h>
 #include "../include/Menu.h"
 
 void Menu::display() {
-    std::cout << "\t[1] Start\n";
-    std::cout << "\t[2] Settings\n";
-    std::cout << "\t[3] Exit\n";
+    mvprintw(5, 10, "[1] Start");
+    mvprintw(6, 10, "[2] Settings");
+    mvprintw(7, 10, "[3] Exit");
+    mvprintw(9, 10, "Select an option: ");
+    refresh();
 }
 
 int Menu::getChoice() {
-    int choice;
-    std::cin >> choice;
-    return choice;
+    int ch = getch();
+    switch (ch) {
+        case '1': return 1;
+        case '2': return 2;
+        case '3': return 3;
+        default:  return -1;
+    }
 }

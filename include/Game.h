@@ -6,9 +6,9 @@
 class Game {
 public:
     Game();
-    void init(const Settings& settings);
-    void run();
-    void handleInput();
+    void init();
+    void run(const Settings& settings);
+    void handleInput(const Settings& settings);
     void update();
     void render();
 private:

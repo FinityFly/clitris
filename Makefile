@@ -1,15 +1,15 @@
 CXX = g++
 CXXFLAGS = -Wall -Wextra -std=c++17
 
-#SRC = src/main.cpp src/Game.cpp src/Menu.cpp src/Settings.cpp src/Tetris.cpp src/Tetromino.cpp
-SRC = src/main.cpp src/Game.cpp src/Menu.cpp src/Settings.cpp
+SRC = src/main.cpp src/Game.cpp src/Menu.cpp src/Settings.cpp src/Tetromino.cpp src/SRS.cpp
 OBJ = $(SRC:.cpp=.o)
 TARGET = tetris
+LDFLAGS = -lncurses
 
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -f $(OBJ) $(TARGET)

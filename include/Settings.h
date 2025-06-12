@@ -1,16 +1,22 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include <string>
+#include <unordered_map>
+#include <vector>
 class Settings {
 public:
+    void configureDefault();
     void configure();
+    std::unordered_map<std::string, std::vector<int>> getKeyBindings() const;
 
 private:
-    float arr; // auto repeat rate
-    float das; // delayed auto shift
-    float dcd; // das cut delay
-    float sdf; // soft drop factor
+    float ARR; // auto repeat rate
+    float DAS; // delayed auto shift
+    float DCD; // das cut delay
+    float SDF; // soft drop factor
+
+    std::unordered_map<std::string, std::vector<int>> keyBindings;
 };
 
 #endif
-
