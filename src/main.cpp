@@ -19,7 +19,7 @@ int main() {
     bool running = true;
 
     while (running) {
-        clear();
+        erase();
         menu.display();
         int choice = menu.getChoice();
 

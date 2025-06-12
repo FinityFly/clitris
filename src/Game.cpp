@@ -8,7 +8,7 @@ Game::Game() : isRunning(false) {}
 
 void Game::init() {
     isRunning = true;
-    clear();
+    erase();
     refresh();
 }
 
