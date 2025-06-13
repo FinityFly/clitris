@@ -33,12 +33,10 @@ void Menu::display() {
     WINDOW* menuwin = newwin(box_height, box_width, starty, startx);
     box(menuwin, 0, 0);
 
-    // Print options
     for (size_t i = 0; i < options.size(); ++i) {
         int opt_x = (box_width - options[i].size()) / 2;
         mvwprintw(menuwin, (int)i + 1, opt_x, "%s", options[i].c_str());
     }
-    // Print prompt
     int prompt_x = (box_width - prompt.size()) / 2;
     mvwprintw(menuwin, (int)options.size() + 2, prompt_x, "%s", prompt.c_str());
 

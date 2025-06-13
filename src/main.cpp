@@ -20,6 +20,7 @@ int main() {
 
     while (running) {
         erase();
+        refresh();
         menu.display();
         int choice = menu.getChoice();
 

@@ -41,7 +41,7 @@ void Settings::configure() {
         return false;
     };
 
-    std::pair<char*, float*> prompts[] = {
+    std::pair<std::string, float*> prompts[] = {
         {"Enter ARR (0.1-10.0)", &ARR},
         {"Enter DAS (0.1-10.0)", &DAS},
         {"Enter DCD (0.1-10.0)", &DCD},
@@ -49,7 +49,7 @@ void Settings::configure() {
     };
 
     for (int i = 0; i < 4; ++i) {
-        mvprintw(i + 2, 0, "%s [%.1f]: ", prompts[i].first, *(prompts[i].second));
+        mvprintw(i + 2, 0, "%s [%.1f]: ", prompts[i].first.c_str(), *(prompts[i].second));
         refresh();
         char input[8];
         getnstr(input, 7);
