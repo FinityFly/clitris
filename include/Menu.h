@@ -5,6 +5,8 @@ class Menu {
 public:
     void display();
     int getChoice();
+private:
+    int choice = -1;
 };
 
 #endif

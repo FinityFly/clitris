@@ -36,7 +36,7 @@ int main() {
                 running = false;
                 break;
             default:
-                mvprintw(0, 0, "Invalid choice. Please try again.\n");
+                mvprintw(0, 0, "Invalid choice of %d. Please try again.\n", choice);
                 refresh();
                 getch();
         }
