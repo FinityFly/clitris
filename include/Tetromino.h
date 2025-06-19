@@ -3,30 +3,33 @@
 
 #include <vector>
 
-enum class TetrominoType { I, O, T, J, L, S, Z };
-
 class Tetromino {
 public:
-    Tetromino(TetrominoType type);
-    void rotateCW();
-    void rotateCCW();
+    Tetromino();
+    Tetromino(char type);
+    Tetromino(const Tetromino& other) = default;
+    Tetromino& operator=(const Tetromino& other) = default;
+    void rotateCW(const std::vector<std::vector<int>>& board);
+    void rotateCCW(const std::vector<std::vector<int>>& board);
+    void rotate180(const std::vector<std::vector<int>>& board);
     void moveLeft();
     void moveRight();
-    void softDrop();
-    void hardDrop();
 
     std::vector<std::vector<int>> getShape() const;
-    TetrominoType getType() const;
+    char getType() const;
     int getRotationState() const;
     int getX() const;
     int getY() const;
+    int getColor() const;
+    int getShapesCount() const;
 
     void setX(int newX);
     void setY(int newY);
     void setRotationState(int newState);
 
 private:
-    TetrominoType type;
+    char type;
+    int color;
     std::vector<std::vector<std::vector<int>>> shapes;
     int rotationState;
     int x, y;

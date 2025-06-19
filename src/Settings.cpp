@@ -9,17 +9,18 @@
 #include "../include/Settings.h"
 
 void Settings::configureDefault() {
-    ARR = 1.f;
-    DAS = 8.f;
-    DCD = 1.f;
-    SDF = 99.f;
+    ARR = 0.5f; // 20-50ms
+    DAS = 8.f; // 100-200ms
+    DCD = 1.f; // 0-100ms
+    SDF = 99.f; // 0-100ms, 0 is instant drop
 
     keyBindings = {
         {"LEFT",    {260, 106}},         // left arrow key, j key
         {"RIGHT",   {261, 108}},         // right arrow key, l key
         {"ROTATE_CW",  {120}},           // x key
         {"ROTATE_CCW", {122}},           // z key
-        {"HOLD",    {99, 259, 105}},     // c key, up arrow, i key
+        {"FLIP",     {99}},              // c key
+        {"HOLD",    {259, 105}},         // up arrow, i key
         {"SOFT_DROP", {258, 107}},       // down arrow, k key
         {"HARD_DROP", {32}},             // space key
         {"QUIT",    {113, 27}},          // q key, esc

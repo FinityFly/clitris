@@ -9,6 +9,10 @@ public:
     void configureDefault();
     void configure();
     std::unordered_map<std::string, std::vector<int>> getKeyBindings() const;
+    float getARR() const { return ARR; }
+    float getDAS() const { return DAS; }
+    float getDCD() const { return DCD; }
+    float getSDF() const { return SDF; }
 
 private:
     float ARR; // auto repeat rate

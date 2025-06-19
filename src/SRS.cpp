@@ -1,27 +1,30 @@
 #include "../include/SRS.h"
+#include <tuple>
 
-bool SRS::canRotate(const Tetromino& tetromino, const std::vector<std::vector<int>>& board, bool clockwise) {
-    Tetromino testTetromino = tetromino;
-    if (clockwise) {
-        testTetromino.rotateCW();
-    } else {
-        testTetromino.rotateCCW();
+std::tuple<int, int, int> SRS::rotate(const Tetromino& tetromino, const std::vector<std::vector<int>>& board, bool clockwise) {
+    // O-piece: no rotation, no kicks
+    if (tetromino.getType() == 'O' || tetromino.getType() == 'o') {
+        return std::make_tuple(tetromino.getX(), tetromino.getY(), 0);
     }
-
-    auto offsets = getKickOffsets(tetromino.getType(), tetromino.getRotationState(), clockwise);
+    int numStates = tetromino.getShapesCount();
+    int oldRotation = tetromino.getRotationState();
+    int nextRotation = clockwise ? (oldRotation + 1) % numStates : (oldRotation - 1 + numStates) % numStates;
+    int oldX = tetromino.getX();
+    int oldY = tetromino.getY();
+    auto offsets = getKickOffsets(tetromino.getType(), oldRotation, clockwise);
     for (const auto& offset : offsets) {
-        testTetromino.setX(tetromino.getX() + offset.first);
-        testTetromino.setY(tetromino.getY() + offset.second);
-
+        Tetromino testTetromino = tetromino;
+        testTetromino.setRotationState(nextRotation);
+        testTetromino.setX(oldX + offset.first);
+        testTetromino.setY(oldY + offset.second);
         if (isValidPosition(testTetromino, board)) {
-            return true;
+            return std::make_tuple(oldX + offset.first, oldY + offset.second, nextRotation);
         }
     }
-
-    return false;
+    return std::make_tuple(oldX, oldY, oldRotation);
 }
 
-std::vector<std::pair<int, int>> SRS::getKickOffsets(TetrominoType type, int rotationState, bool clockwise) {
+std::vector<std::pair<int, int>> SRS::getKickOffsets(char type, int rotationState, bool clockwise) {
     // SRS kick data for JLSTZ pieces
     static const std::vector<std::vector<std::pair<int, int>>> JLSTZ_CW = {
         {{0, 0}, {-1, 0}, {-1, 1}, {0, -2}, {-1, -2}}, // 0 -> R
@@ -50,18 +53,18 @@ std::vector<std::pair<int, int>> SRS::getKickOffsets(TetrominoType type, int rot
         {{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}}    // L -> 2
     };
 
-    if (type == TetrominoType::I) {
+    if (type == 'I') {
         if (clockwise) {
             return I_CW[rotationState % 4];
         } else {
             return I_CCW[rotationState % 4];
         }
     } else if (
-        type == TetrominoType::T ||
-        type == TetrominoType::J ||
-        type == TetrominoType::L ||
-        type == TetrominoType::S ||
-        type == TetrominoType::Z
+        type == 'T' ||
+        type == 'J' ||
+        type == 'L' ||
+        type == 'S' ||
+        type == 'Z'
     ) {
         if (clockwise) {
             return JLSTZ_CW[rotationState % 4];
