@@ -1,8 +1,6 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "Settings.h"
-#include "Tetromino.h"
 #include <atomic>
 #include <thread>
 #include <vector>
@@ -12,13 +10,17 @@
 #include <queue>
 #include <unordered_set>
 
+#include "Settings.h"
+#include "Tetromino.h"
+#include "GameUtils.h"
+
 class Game {
 public:
     Game();
     void reset();
+    void newPiece();
     void init();
     void run(const Settings& settings);
-    void handleInput(const Settings& settings, int ch);
     void update();
     void render();
     bool canPlace(const Tetromino& piece);
@@ -31,7 +33,20 @@ private:
     Tetromino currentPiece;
     Tetromino holdPiece;
     bool holdAvailable;
-    std::unordered_map<std::string, int> statistics;
+    bool lastRotationWasKick = false;
+    std::unordered_map<std::string, int> statistics = {
+        {"totalPieces", 0},
+        {"score", 0},
+        {"lines", 0},
+        {"tspins", 0},
+        {"tspin_minis", 0},
+        {"b2bStreak", 0},
+        {"max_b2bStreak", 0},
+        {"combo", 0},
+        {"max_combo", 0},
+        {"perfect_clears", 0}
+    };
+
     int fallDelay; // ms
     std::chrono::steady_clock::time_point lastFallTime;
     std::ofstream fout;
@@ -40,6 +55,12 @@ private:
     bool rightHeld = false;
     bool softDropHeld = false;
     int lastDirection = 0; // -1 for left, 1 for right, 0 for none
+
+    void handleInput(const Settings& settings, int ch);
+    void clearLines();
+    void processLineClear();
+    void updateStatistics(const GameUtils::ClearInfo& info);
+    void showPopup(const std::string& text);
 };
 
 #endif

@@ -86,3 +86,14 @@ void UI::renderPieceBox(WINDOW* win, const Tetromino& tetromino, int cell_width)
         wattroff(win, COLOR_PAIR(color));
     }
 }
+
+void UI::renderStatsWindow(WINDOW* win, const std::unordered_map<std::string, int>& statistics, double seconds) {
+    box(win, 0, 0);
+    mvwprintw(win, 0, 2, "STATS");
+    double pps = (seconds > 0) ? (statistics.at("totalPieces") / seconds) : 0.0;
+    double sps = (seconds > 0) ? (statistics.at("score") / seconds) : 0.0;
+    mvwprintw(win, 1, 1, "Score: %d", statistics.at("score"));
+    mvwprintw(win, 2, 1, "Lines: %d", statistics.at("lines"));
+    mvwprintw(win, 3, 1, "PPS: %.2f", pps);
+    mvwprintw(win, 4, 1, "SPS: %.2f", sps);
+}
