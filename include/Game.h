@@ -15,6 +15,7 @@
 class Game {
 public:
     Game();
+    void reset();
     void init();
     void run(const Settings& settings);
     void handleInput(const Settings& settings, int ch);

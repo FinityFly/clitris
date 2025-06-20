@@ -2,14 +2,14 @@
 #include "../include/SRS.h"
 #include <tuple>
 
-Tetromino::Tetromino() : type('I'), color(6), rotationState(0), x(3), y(3) {
+Tetromino::Tetromino() : type('I'), color(6), rotationState(0), x(3), y(0) {
     initializeShapes();
 }
 
-Tetromino::Tetromino(char type) : type(type), rotationState(0), x(3), y(3) {
+Tetromino::Tetromino(char type) : type(type), rotationState(0), x(3), y(0) {
     switch (type) {
         case 'I': color = 6; break; // Cyan
-        case 'O': color = 3; break; // Yellow
+        case 'O': color = 3; x = 4; break; // Yellow
         case 'T': color = 5; break; // Magenta
         case 'J': color = 4; break; // Blue
         case 'L': color = 1; break; // Orange

@@ -8,29 +8,34 @@
 
 #include "../include/Game.h"
 #include "../include/GameUtils.h"
+#include "../include/UI.h"
 #include "../include/Settings.h"
 #include "../include/Tetromino.h"
 #include "../include/SRS.h"
 
-Game::Game()
-    : isRunning(false),
-      board(40, std::vector<int>(10, 0)),
-      fout("tetris_log.txt", std::ios::trunc) {
-    // Generate two bags and concatenate
+void Game::reset() {
+    board.assign(40, std::vector<int>(10, 0));
+    bag.clear();
     auto bag1 = GameUtils::generateBag();
     auto bag2 = GameUtils::generateBag();
     bag.reserve(bag1.size() + bag2.size());
     bag.insert(bag.end(), bag1.begin(), bag1.end());
     bag.insert(bag.end(), bag2.begin(), bag2.end());
-    fout << "Bag generated with " << bag.size() << " pieces.\n";
-    currentPiece = Tetromino(bag.back());
-    bag.pop_back();
+    currentPiece = bag.front();
+    bag.erase(bag.begin());
     holdPiece = NULL;
     holdAvailable = true;
-    fallDelay = 500; // ms
     lastFallTime = std::chrono::steady_clock::now();
     std::time_t now = std::time(nullptr);
     fout << "Game initialized at " << std::ctime(&now);
+}
+
+Game::Game()
+    : isRunning(false),
+      board(40, std::vector<int>(10, 0)),
+      fallDelay(500),
+      fout("tetris_log.txt", std::ios::trunc) {
+    reset();
 }
 
 void Game::init() {
@@ -46,11 +51,12 @@ void Game::run(const Settings& settings) {
     rightHeld = false;
     softDropHeld = false;
     lastDirection = 0;
-    // Timing for ARR/DAS/SDF
+
     float arr = settings.getARR(); // auto repeat rate (ms)
     float das = settings.getDAS(); // delayed auto shift (ms)
     float dcd = settings.getDCD(); // das cut delay (ms)
     float sdf = settings.getSDF(); // soft drop factor (ms)
+
     auto lastLeft = std::chrono::steady_clock::now();
     auto lastRight = std::chrono::steady_clock::now();
     auto lastSoftDrop = std::chrono::steady_clock::now();
@@ -201,7 +207,18 @@ void Game::handleInput(const Settings& settings, int ch) {
                     }
                 } else if (action == "HOLD") {
                     if (holdAvailable) {
-                        // hold logic later
+                        if (holdPiece.getType() != 0) {
+                            std::swap(currentPiece, holdPiece);
+                        } else {
+                            holdPiece = currentPiece;
+                            Tetromino newPiece = bag.front();
+                            bag.erase(bag.begin());
+                            if (bag.size() <= 7) {
+                                auto newBag = GameUtils::generateBag();
+                                bag.insert(bag.end(), newBag.begin(), newBag.end());
+                            }
+                            currentPiece = newPiece;
+                        }
                         holdAvailable = false;
                     }
                 } else if (action == "HARD_DROP") {
@@ -211,24 +228,21 @@ void Game::handleInput(const Settings& settings, int ch) {
                         moved.setY(moved.getY() + 1);
                     }
                     GameUtils::placePiece(currentPiece, board);
-                    if (!bag.empty()) {
-                        currentPiece = bag.back();
-                        bag.pop_back();
-                    } else {
-                        if (bag.size() <= 7) {
-                            auto newBag = GameUtils::generateBag();
-                            bag.insert(bag.end(), newBag.begin(), newBag.end());
-                        }
+                    if (bag.size() <= 7) {
+                        auto newBag = GameUtils::generateBag();
+                        bag.insert(bag.end(), newBag.begin(), newBag.end());
                     }
-                    currentPiece.setX(4);
-                    currentPiece.setY(0);
+                    currentPiece = bag.front();
+                    bag.erase(bag.begin());
                     holdAvailable = true;
                     lastFallTime = std::chrono::steady_clock::now();
                     return;
                 } else if (action == "QUIT") {
                     isRunning = false;
+                    reset();
                 } else if (action == "RESTART") {
-                    // Optionally implement restart logic
+                    // clear board and reset game state
+                    reset();
                 }
                 refresh();
             }
@@ -238,7 +252,6 @@ void Game::handleInput(const Settings& settings, int ch) {
 }
 
 void Game::update() {
-    // Drop tetromino at a controllable rate
     auto now = std::chrono::steady_clock::now();
     if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastFallTime).count() >= fallDelay) {
         Tetromino moved = currentPiece;
@@ -252,10 +265,8 @@ void Game::update() {
                 auto newBag = GameUtils::generateBag();
                 bag.insert(bag.end(), newBag.begin(), newBag.end());
             }
-            currentPiece = bag.back();
-            bag.pop_back();
-            currentPiece.setX(3); // spawn x
-            currentPiece.setY(0); // spawn y
+            currentPiece = bag.front();
+            bag.erase(bag.begin());
             holdAvailable = true;
         }
         lastFallTime = now;
@@ -270,80 +281,47 @@ void Game::render() {
     int cell_width = 2;
     int win_height = board_height + 2;
     int win_width = board_width * cell_width + 2; 
+    int box_width = 12;
+    int box_height = 6;
+
     int start_y = (term_rows - board_height) / 2;
     int start_x = (term_cols - win_width) / 2;
+
+    // Board window
     WINDOW* boardwin = newwin(win_height, win_width, start_y, start_x);
     box(boardwin, 0, 0);
-    // Draw board cells and faded grid
-    for (int y = 0; y < board_height; ++y) {
-        for (int x = 0; x < board_width; ++x) {
-            int draw_x = x * cell_width + 1;
-            char val = board[y][x]; // color value
-            if (val != 0) {
-                wattron(boardwin, COLOR_PAIR(val));
-                for (int i = 0; i < cell_width; ++i) {
-                    mvwaddch(boardwin, y + 1, draw_x + i, ' ');
-                }
-                wattroff(boardwin, COLOR_PAIR(val));
-            } else {
-                wattron(boardwin, A_DIM);
-                for (int i = 0; i < cell_width; ++i) {
-                    mvwaddch(boardwin, y + 1, draw_x + i, ' ');
-                }
-                wattroff(boardwin, A_DIM);
-            }
-        }
-    }
-    // Draw ghost piece
-    Tetromino ghost = currentPiece;
-    while (true) {
-        Tetromino moved = ghost;
-        moved.setY(ghost.getY() + 1);
-        if (GameUtils::canPlace(moved, board)) {
-            ghost.setY(ghost.getY() + 1);
-        } else {
-            break;
-        }
-    }
-    int ghostColor = currentPiece.getColor();
-    int gpx = ghost.getX();
-    int gpy = ghost.getY();
-    auto gshape = ghost.getShape();
-    for (int y = 0; y < (int)gshape.size(); ++y) {
-        for (int x = 0; x < (int)gshape[y].size(); ++x) {
-            if (gshape[y][x]) {
-                int bx = gpx + x;
-                int by = gpy + y;
-                if (bx >= 0 && bx < 10 && by >= 0 && by < 40) {
-                    int draw_x = bx * cell_width + 1;
-                    wattron(boardwin, COLOR_PAIR(ghostColor) | A_DIM);
-                    mvwaddch(boardwin, by + 1, draw_x, '.');
-                    mvwaddch(boardwin, by + 1, draw_x + 1, '.');
-                    wattroff(boardwin, COLOR_PAIR(ghostColor) | A_DIM);
-                }
-            }
-        }
-    }
-    // Overlay current tetromino
-    int color = currentPiece.getColor();
-    int px = currentPiece.getX();
-    int py = currentPiece.getY();
-    auto shape = currentPiece.getShape();
-    for (int y = 0; y < (int)shape.size(); ++y) {
-        for (int x = 0; x < (int)shape[y].size(); ++x) {
-            if (shape[y][x]) {
-                int bx = px + x;
-                int by = py + y;
-                if (bx >= 0 && bx < 10 && by >= 0 && by < 40) {
-                    int draw_x = bx * cell_width + 1;
-                    wattron(boardwin, COLOR_PAIR(color));
-                    mvwaddch(boardwin, by + 1, draw_x, ' ');
-                    mvwaddch(boardwin, by + 1, draw_x + 1, ' ');
-                    wattroff(boardwin, COLOR_PAIR(color));
-                }
-            }
-        }
-    }
+
+    UI::renderBoard(boardwin, board, cell_width);
+    UI::renderGhostPiece(boardwin, currentPiece, board, cell_width);
+    UI::renderTetromino(boardwin, currentPiece, cell_width, false);
     wrefresh(boardwin);
+
+    // hold window
+    int hold_x = start_x - box_width - 2;
+    int hold_y = start_y;
+    WINDOW* holdwin = newwin(box_height, box_width, hold_y, hold_x);
+    box(holdwin, 0, 0);
+    mvwprintw(holdwin, 0, 2, "HOLD");
+    UI::renderPieceBox(holdwin, holdPiece, cell_width);
+    wrefresh(holdwin);
+
+    // next window
+    int next_x = start_x + win_width + 2;
+    int next_y = start_y;
+    int next_box_height = box_height * 4 + 2;
+    int next_box_width = box_width;
+    WINDOW* nextwin = newwin(next_box_height, next_box_width, next_y, next_x);
+    box(nextwin, 0, 0);
+    mvwprintw(nextwin, 0, 2, "NEXT");
+    for (int i = 0; i < 4 && i < (int)bag.size(); ++i) {
+        int piece_offset_y = 1 + i * box_height;
+        WINDOW* temp = derwin(nextwin, box_height - 2, box_width - 2, piece_offset_y, 1);
+        UI::renderPieceBox(temp, bag[i], cell_width);
+        delwin(temp);
+    }
+    wrefresh(nextwin);
+
     delwin(boardwin);
+    delwin(holdwin);
+    delwin(nextwin);
 }

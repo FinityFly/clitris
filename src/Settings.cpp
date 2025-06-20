@@ -9,10 +9,10 @@
 #include "../include/Settings.h"
 
 void Settings::configureDefault() {
-    ARR = 0.5f; // 20-50ms
-    DAS = 8.f; // 100-200ms
-    DCD = 1.f; // 0-100ms
-    SDF = 99.f; // 0-100ms, 0 is instant drop
+    ARR = 0.5f; // 0-100ms: 0ms
+    DAS = 8.f; // 20-300ms: 100ms
+    DCD = 1.f; // 0-300ms: 50ms
+    SDF = 99.f; // 0-100ms: 0 is instant drop
 
     keyBindings = {
         {"LEFT",    {260, 106}},         // left arrow key, j key

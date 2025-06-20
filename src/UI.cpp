@@ -23,7 +23,7 @@ void UI::renderBoard(WINDOW* win, const std::vector<std::vector<int>>& board, in
     }
 }
 
-void UI::renderTetromino(WINDOW* win, const Tetromino& tetromino, int cell_width) {
+void UI::renderTetromino(WINDOW* win, const Tetromino& tetromino, int cell_width, bool ghost) {
     int color = tetromino.getColor();
     int px = tetromino.getX();
     int py = tetromino.getY();
@@ -34,22 +34,38 @@ void UI::renderTetromino(WINDOW* win, const Tetromino& tetromino, int cell_width
                 int bx = px + x;
                 int by = py + y;
                 int draw_x = bx * cell_width + 1;
-                wattron(win, COLOR_PAIR(color));
-                mvwaddch(win, by + 1, draw_x, ' ');
-                mvwaddch(win, by + 1, draw_x + 1, ' ');
-                wattroff(win, COLOR_PAIR(color));
+                if (ghost) {
+                    wattron(win, COLOR_PAIR(color) | A_BOLD);
+                    mvwaddch(win, by + 1, draw_x, '.');
+                    mvwaddch(win, by + 1, draw_x + 1, '.');
+                    wattroff(win, COLOR_PAIR(color) | A_BOLD);
+                } else {
+                    wattron(win, COLOR_PAIR(color));
+                    mvwaddch(win, by + 1, draw_x, ' ');
+                    mvwaddch(win, by + 1, draw_x + 1, ' ');
+                    wattroff(win, COLOR_PAIR(color));
+                }
             }
         }
     }
 }
 
-void UI::renderPieceBox(WINDOW* win, const Tetromino& tetromino, int cell_width, const char* label) {
-    box(win, 0, 0);
-    if (label) {
-        mvwprintw(win, 0, 2, "%s", label);
+void UI::renderGhostPiece(WINDOW* win, const Tetromino& tetromino, const std::vector<std::vector<int>>& board, int cell_width) {
+    Tetromino ghost = tetromino;
+    while (true) {
+        Tetromino moved = ghost;
+        moved.setY(ghost.getY() + 1);
+        if (GameUtils::canPlace(moved, board)) {
+            ghost.setY(ghost.getY() + 1);
+        } else {
+            break;
+        }
     }
+    renderTetromino(win, ghost, cell_width, true);
+}
+
+void UI::renderPieceBox(WINDOW* win, const Tetromino& tetromino, int cell_width) {
     if (tetromino.getType() != 0) {
-        // Center the piece in the box
         int box_height, box_width;
         getmaxyx(win, box_height, box_width);
         auto shape = tetromino.getShape();
