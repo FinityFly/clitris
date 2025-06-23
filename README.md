@@ -1,4 +1,4 @@
-# CLITRIS (Command Line Interface Tetris)
+# clitris
 
 ## Getting Started
 
