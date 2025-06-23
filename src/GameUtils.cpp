@@ -64,7 +64,7 @@ int GameUtils::clearLines(std::vector<std::vector<int>>& board) {
             board.erase(board.begin() + y);
             board.insert(board.begin(), std::vector<int>(board[0].size(), 0));
             ++linesCleared;
-            ++y; // Recheck this row after shifting
+            ++y;
         }
     }
     return linesCleared;
@@ -123,7 +123,7 @@ GameUtils::ClearInfo GameUtils::checkClearConditions(const Tetromino& piece,
     
     // Clear lines and check perfect clear
     info.lines = clearLines(board);
-    info.perfect = info.lines > 0 && isPerfectClear(board);
+    info.pc = info.lines > 0 && isPerfectClear(board);
     
     return info;
 }
@@ -158,7 +158,7 @@ int GameUtils::calculateScore(const ClearInfo& info, int b2bStreak, int combo) {
     }
     
     // Perfect clear bonus
-    if (info.perfect) {
+    if (info.pc) {
         points += info.lines == 1 ? 1000 :
                   info.lines == 2 ? 3000 :
                   info.lines == 3 ? 5000 :

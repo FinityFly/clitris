@@ -1,11 +1,25 @@
+#include <locale.h>
+#include <csignal>
 #include <ncurses.h>
 #include <iostream>
 #include "../include/Game.h"
 #include "../include/Menu.h"
 #include "../include/Settings.h"
 
+void handle_signal(int sig) {
+    (void)sig;
+    endwin();
+    std::_Exit(1);
+}
+
 int main() {
+    setlocale(LC_ALL, "");
     initscr();
+
+    atexit([](){ endwin(); });
+    std::signal(SIGINT, handle_signal);
+    std::signal(SIGTERM, handle_signal);
+
     cbreak();
     noecho();
     keypad(stdscr, TRUE);
@@ -26,7 +40,6 @@ int main() {
     Menu menu;
     Game game;
 
-    settings.configureDefault();
     bool running = true;
 
     while (running) {

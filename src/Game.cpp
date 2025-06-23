@@ -31,8 +31,13 @@ void Game::reset() {
         {"totalPieces", 0},
         {"score", 0},
         {"lines", 0},
+        {"single", 0},
+        {"double", 0},
+        {"triple", 0},
+        {"tetris", 0},
         {"tspins", 0},
         {"tspin_minis", 0},
+        {"pc", 0},
         {"b2bStreak", 0},
         {"max_b2bStreak", 0},
         {"combo", 0},
@@ -235,6 +240,7 @@ void Game::handleInput(const Settings& settings, int ch) {
                     }
                 } else if (action == "HOLD") {
                     if (holdAvailable) {
+                        currentPiece.setRotationState(0);
                         if (holdPiece.getType() != 0) {
                             std::swap(currentPiece, holdPiece);
                         } else {
@@ -277,10 +283,31 @@ void Game::processLineClear() {
 
     if (clearInfo.lines > 0) {
         statistics["combo"] = std::max(0, statistics["combo"]) + 1;
-        if (clearInfo.lines == 4 || clearInfo.tspin || clearInfo.mini) statistics["b2bStreak"]++;
+        if (clearInfo.lines == 1) {
+            statistics["single"]++;
+        } else if (clearInfo.lines == 2) {
+            statistics["double"]++;
+        } else if (clearInfo.lines == 3) {
+            statistics["triple"]++;
+        } else if (clearInfo.lines == 4) {
+            statistics["tetris"]++;
+        }
+        if (clearInfo.tspin) {
+            statistics["tspins"]++;
+        }
+        if (clearInfo.mini) {
+            statistics["tspin_minis"]++;
+        }
+        if (clearInfo.pc) {
+            statistics["pc"]++;
+        }
+        if (clearInfo.lines == 4 || clearInfo.tspin || clearInfo.mini || clearInfo.pc) {
+            statistics["b2bStreak"]++;
+        } else {
+            statistics["b2bStreak"] = 0;
+        }
     } else {
         statistics["combo"] = 0;
-        statistics["b2bStreak"] = 0;
     }
 
     updateStatistics(clearInfo);
@@ -289,11 +316,10 @@ void Game::processLineClear() {
     lastFallTime = std::chrono::steady_clock::now();
 }
 
-void Game::showPopup(const std::string& text) {
-    static std::string& popupText = *new std::string;
-    static auto& popupTime = *new std::chrono::steady_clock::time_point;
+void Game::showPopup(const std::string& text, float durationSeconds) {
     popupText = text;
-    popupTime = std::chrono::steady_clock::now();
+    popupStartTime = std::chrono::steady_clock::now();
+    popupDurationSeconds = durationSeconds;
 }
 
 void Game::updateStatistics(const GameUtils::ClearInfo& info) {
@@ -314,13 +340,16 @@ void Game::updateStatistics(const GameUtils::ClearInfo& info) {
     if (statistics["combo"] > statistics["max_combo"]) {
         statistics["max_combo"] = statistics["combo"];
     }
-    if (info.perfect) {
-        statistics["perfect_clears"]++;
+    if (info.pc) {
+        statistics["pc"]++;
     }
 
     std::string popupText = "";
 
-    if (statistics["b2bStreak"] > 1) popupText += std::to_string(statistics["b2bStreak"]) + "x B2B ";
+    if (statistics["b2bStreak"] > 1) {
+        popupText += std::to_string(statistics["b2bStreak"]) + "x B2B ";
+    }
+
     if (info.tspin || info.mini) {
         popupText += "T-SPIN ";
     }
@@ -336,17 +365,13 @@ void Game::updateStatistics(const GameUtils::ClearInfo& info) {
         popupText += "MINI ";
     }
 
-    if (info.perfect) popupText += "PERFECT CLEAR ";
+    if (info.pc) popupText += "PERFECT CLEAR ";
 
     if (!popupText.empty()) popupText += "!";
 
     if (statistics["combo"] > 1) popupText += "\t" + std::to_string(statistics["combo"]) + "x COMBO!";
 
     showPopup(popupText);
-
-    int term_rows, term_cols;
-    getmaxyx(stdscr, term_rows, term_cols);
-    mvprintw(term_rows - 2, 2, "DEBUG POPUP: %s", popupText.c_str());
 }
 
 void Game::update() {
@@ -382,6 +407,8 @@ void Game::render() {
     int start_y = (term_rows - board_height) / 2;
     int start_x = (term_cols - win_width) / 2;
 
+    auto now = std::chrono::steady_clock::now();
+
     // Board window
     WINDOW* boardwin = newwin(win_height, win_width, start_y, start_x);
     box(boardwin, 0, 0);
@@ -389,6 +416,11 @@ void Game::render() {
     UI::renderGhostPiece(boardwin, currentPiece, board, cell_width);
     UI::renderTetromino(boardwin, currentPiece, cell_width, false);
     wrefresh(boardwin);
+
+    std::string scoreStr = "Score: " + std::to_string(statistics["score"]);
+    int score_x = start_x + (win_width - scoreStr.size()) / 2;
+    int score_y = start_y + board_height + 2;
+    mvprintw(score_y, score_x, "%s", scoreStr.c_str());
 
     // hold window
     int hold_x = start_x - box_width - 2;
@@ -400,14 +432,13 @@ void Game::render() {
     wrefresh(holdwin);
 
     // stats window
-    int stats_height = 8;
-    int stats_width = box_width + 4;
+    int stats_height = 20;
+    int stats_width = box_width + 2;
     int stats_y = hold_y + box_height + 1;
-    int stats_x = hold_x - 4;
+    int stats_x = hold_x - 2;
     WINDOW* statswin = newwin(stats_height, stats_width, stats_y, stats_x);
 
     static auto gameStart = std::chrono::steady_clock::now();
-    auto now = std::chrono::steady_clock::now();
     double seconds = std::chrono::duration<double>(now - gameStart).count();
     UI::renderStatsWindow(statswin, statistics, seconds);
     wrefresh(statswin);
@@ -428,19 +459,30 @@ void Game::render() {
     }
     wrefresh(nextwin);
 
-    // pop up text
-    static std::string popupText;
-    static auto popupTime = std::chrono::steady_clock::now();
-    if (!popupText.empty() && std::chrono::duration_cast<std::chrono::milliseconds>(now - popupTime).count() < 1200) {
-        int popup_y = start_y - 2;
-        int popup_x = start_x + win_width / 2 - popupText.size() / 2;
+    // handling window
+    int handling_height = 6;
+    int handling_width = box_width;
+    int handling_y = next_y + next_box_height + 1;
+    int handling_x = next_x;
+    WINDOW* handlingwin = newwin(handling_height, handling_width, handling_y, handling_x);
+    UI::renderHandling(handlingwin);
+    wrefresh(handlingwin);
+
+    // popup text
+    int popup_y = stats_y + stats_height + 2;
+    int popup_x = start_x - popupText.size() - 1;
+
+    if (!popupText.empty() && std::chrono::duration<double>(now - popupStartTime).count() < popupDurationSeconds) {
         mvprintw(popup_y, popup_x, "%s", popupText.c_str());
     } else {
+        std::string blank(popupText.size(), ' ');
+        mvprintw(popup_y, popup_x, "%s", blank.c_str());
         popupText.clear();
     }
 
     delwin(boardwin);
     delwin(holdwin);
     delwin(nextwin);
+    delwin(handlingwin);
     delwin(statswin);
 }

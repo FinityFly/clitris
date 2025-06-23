@@ -55,12 +55,15 @@ private:
     bool rightHeld = false;
     bool softDropHeld = false;
     int lastDirection = 0; // -1 for left, 1 for right, 0 for none
+    std::string popupText;
+    std::chrono::steady_clock::time_point popupStartTime;
+    float popupDurationSeconds = 0.0;
 
     void handleInput(const Settings& settings, int ch);
     void clearLines();
     void processLineClear();
     void updateStatistics(const GameUtils::ClearInfo& info);
-    void showPopup(const std::string& text);
+    void showPopup(const std::string& text, float durationSeconds = 2.0);
 };
 
 #endif

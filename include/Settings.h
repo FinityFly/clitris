@@ -6,21 +6,20 @@
 #include <vector>
 class Settings {
 public:
-    void configureDefault();
-    void configure();
-    std::unordered_map<std::string, std::vector<int>> getKeyBindings() const;
-    float getARR() const { return ARR; }
-    float getDAS() const { return DAS; }
-    float getDCD() const { return DCD; }
-    float getSDF() const { return SDF; }
+    static void configure();
+    static std::unordered_map<std::string, std::vector<int>> getKeyBindings();
+    static float getARR() { return ARR; }
+    static float getDAS() { return DAS; }
+    static float getDCD() { return DCD; }
+    static float getSDF() { return SDF; }
 
 private:
-    float ARR; // auto repeat rate
-    float DAS; // delayed auto shift
-    float DCD; // das cut delay
-    float SDF; // soft drop factor
+    static float ARR; // auto repeat rate
+    static float DAS; // delayed auto shift
+    static float DCD; // das cut delay
+    static float SDF; // soft drop factor
 
-    std::unordered_map<std::string, std::vector<int>> keyBindings;
+    static std::unordered_map<std::string, std::vector<int>> keyBindings;
 };
 
 #endif

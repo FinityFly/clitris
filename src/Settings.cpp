@@ -8,25 +8,23 @@
 
 #include "../include/Settings.h"
 
-void Settings::configureDefault() {
-    ARR = 0.5f; // 0-100ms: 0ms
-    DAS = 8.f; // 20-300ms: 100ms
-    DCD = 1.f; // 0-300ms: 50ms
-    SDF = 99.f; // 0-100ms: 0 is instant drop
+float Settings::ARR = 0.5f; // 0-100ms: 0ms
+float Settings::DAS = 8.f; // 20-300ms: 100ms
+float Settings::DCD = 1.f; // 0-300ms: 50ms
+float Settings::SDF = 99.f; // 0-100ms: 0 is instant drop
 
-    keyBindings = {
-        {"LEFT",    {260, 106}},         // left arrow key, j key
-        {"RIGHT",   {261, 108}},         // right arrow key, l key
-        {"ROTATE_CW",  {120}},           // x key
-        {"ROTATE_CCW", {122}},           // z key
-        {"FLIP",     {99}},              // c key
-        {"HOLD",    {259, 105}},         // up arrow, i key
-        {"SOFT_DROP", {258, 107}},       // down arrow, k key
-        {"HARD_DROP", {32}},             // space key
-        {"QUIT",    {113, 27}},          // q key, esc
-        {"RESTART", {114, 92}}           // r key, '\'
-    };
-}
+std::unordered_map<std::string, std::vector<int>> Settings::keyBindings = {
+    {"LEFT",    {260, 106}},         // left arrow key, j key
+    {"RIGHT",   {261, 108}},         // right arrow key, l key
+    {"ROTATE_CW",  {120}},           // x key
+    {"ROTATE_CCW", {122}},           // z key
+    {"FLIP",     {99}},              // c key
+    {"HOLD",    {259, 105}},         // up arrow, i key
+    {"SOFT_DROP", {258, 107}},       // down arrow, k key
+    {"HARD_DROP", {32}},             // space key
+    {"QUIT",    {113, 27}},          // q key, esc
+    {"RESTART", {114, 92}}           // r key, '\'
+};
 
 void Settings::configure() {
     erase();
@@ -49,7 +47,7 @@ void Settings::configure() {
         }
     });
 
-    auto check_quit = [this](int ch) {
+    auto check_quit = [](int ch, const std::unordered_map<std::string, std::vector<int>>& keyBindings) {
         auto it = keyBindings.find("QUIT");
         if (it != keyBindings.end()) {
             for (int key : it->second) {
@@ -73,7 +71,7 @@ void Settings::configure() {
         refresh();
         int ch = lastInput.exchange(-1);
         if (ch != -1) {
-            if (check_quit(ch)) { noecho(); running = false; break; }
+            if (check_quit(ch, keyBindings)) { noecho(); running = false; break; }
             if (ch == '\n' || ch == KEY_ENTER) {
                 sscanf(input, "%f", prompts[prompt_idx].second);
                 ++prompt_idx;
@@ -102,9 +100,9 @@ void Settings::configure() {
     running = false;
     inputThread.join();
     int ch = getch();
-    if (check_quit(ch)) return;
+    if (check_quit(ch, keyBindings)) return;
 }
 
-std::unordered_map<std::string, std::vector<int>> Settings::getKeyBindings() const {
+std::unordered_map<std::string, std::vector<int>> Settings::getKeyBindings() {
     return keyBindings;
 }

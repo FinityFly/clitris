@@ -16,7 +16,7 @@ public:
         int lines;
         bool tspin;
         bool mini;
-        bool perfect;
+        bool pc;
     };
 
     static std::vector<Tetromino> generateBag();

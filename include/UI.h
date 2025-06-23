@@ -13,4 +13,5 @@ public:
     static void renderGhostPiece(WINDOW* win, const Tetromino& tetromino, const std::vector<std::vector<int>>& board, int cell_width = 2);
     static void renderPieceBox(WINDOW* win, const Tetromino& tetromino, int cell_width = 2);
     static void renderStatsWindow(WINDOW* win, const std::unordered_map<std::string, int>& statistics, double seconds);
+    static void renderHandling(WINDOW* win);
 };
