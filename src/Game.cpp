@@ -46,7 +46,7 @@ void Game::reset() {
     };
     lastFallTime = std::chrono::steady_clock::now();
     std::time_t now = std::time(nullptr);
-    fout << "Game initialized at " << std::ctime(&now);
+    // fout << "Game initialized at " << std::ctime(&now);
 }
 
 void Game::newPiece() {
@@ -153,9 +153,7 @@ void Game::run(const Settings& settings) {
         // Left movement logic
         if (leftHeld && (!rightHeld || lastDirection == -1)) {
             float delay = leftInitial ? das : (leftDCD ? dcd : arr);
-            fout << "Left duration: " << leftDuration << ", delay: " << delay << "\n";
             if (leftInitial || leftDCD || leftDuration >= delay) { // only using leftInitial and leftDCD
-                fout << "MOVE LEFT: " << leftInitial << " " << leftDCD << " " << (leftDuration >= delay) << "\n";
                 Tetromino moved = currentPiece;
                 moved.moveLeft();
                 if (GameUtils::canPlace(moved, board)) {
@@ -173,9 +171,7 @@ void Game::run(const Settings& settings) {
         // Right movement logic
         if (rightHeld && (!leftHeld || lastDirection == 1)) {
             float delay = rightInitial ? das : (rightDCD ? dcd : arr);
-            fout << "Right duration: " << rightDuration << ", delay: " << delay << "\n";
             if (rightInitial || rightDCD || rightDuration >= delay) { // only using rightInitial and rightDCD
-                fout << "MOVE RIGHT: " << rightInitial << " " << rightDCD << " " << (rightDuration >= delay) << "\n";
                 Tetromino moved = currentPiece;
                 moved.moveRight();
                 if (GameUtils::canPlace(moved, board)) {

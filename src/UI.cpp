@@ -115,9 +115,9 @@ void UI::renderStatsWindow(WINDOW* win, const std::unordered_map<std::string, in
     print_stat(row++, "Minis:", "%d", statistics.at("tspin_minis"));
     print_stat(row++, "PC:", "%d", statistics.at("pc"));
     print_stat(row++, "B2B:", "%d", statistics.at("b2bStreak"));
-    print_stat(row++, "Max B2B:", "%d", statistics.at("max_b2bStreak"));
+    print_stat(row++, "+B2B:", "%d", statistics.at("max_b2bStreak"));
     print_stat(row++, "Combo:", "%d", statistics.at("combo"));
-    print_stat(row++, "Max Combo:", "%d", statistics.at("max_combo"));
+    print_stat(row++, "+Combo:", "%d", statistics.at("max_combo"));
     print_stat(row++, "Pieces:", "%d", statistics.at("totalPieces"));
     print_stat(row++, "PPS:", "%.2f", pps);
     print_stat(row++, "SPS:", "%.2f", sps);
