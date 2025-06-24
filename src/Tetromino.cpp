@@ -177,22 +177,24 @@ void Tetromino::initializeShapes() {
 }
 
 void Tetromino::rotateCW(const std::vector<std::vector<int>>& board) {
-    auto [newX, newY, newRotation] = SRS::rotate(*this, board, true);
+    auto [newX, newY, newRotation] = SRS::rotate(*this, board, 1);
     x = newX;
     y = newY;
     rotationState = newRotation;
 }
 
 void Tetromino::rotateCCW(const std::vector<std::vector<int>>& board) {
-    auto [newX, newY, newRotation] = SRS::rotate(*this, board, false);
+    auto [newX, newY, newRotation] = SRS::rotate(*this, board, -1);
     x = newX;
     y = newY;
     rotationState = newRotation;
 }
 
 void Tetromino::rotate180(const std::vector<std::vector<int>>& board) {
-    rotateCW(board);
-    rotateCW(board);
+    auto [newX, newY, newRotation] = SRS::rotate(*this, board, 2);
+    x = newX;
+    y = newY;
+    rotationState = newRotation;
 }
 
 void Tetromino::moveLeft() {

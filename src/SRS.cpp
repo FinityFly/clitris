@@ -1,17 +1,16 @@
 #include "../include/SRS.h"
 #include <tuple>
 
-std::tuple<int, int, int> SRS::rotate(const Tetromino& tetromino, const std::vector<std::vector<int>>& board, bool clockwise) {
-    // O-piece: no rotation, no kicks
+std::tuple<int, int, int> SRS::rotate(const Tetromino& tetromino, const std::vector<std::vector<int>>& board, int rotation) {
     if (tetromino.getType() == 'O') {
         return std::make_tuple(tetromino.getX(), tetromino.getY(), 0);
     }
     int numStates = tetromino.getShapesCount();
     int oldRotation = tetromino.getRotationState();
-    int nextRotation = clockwise ? (oldRotation + 1) % numStates : (oldRotation - 1 + numStates) % numStates;
+    int nextRotation = (oldRotation + rotation + numStates) % numStates;
     int oldX = tetromino.getX();
     int oldY = tetromino.getY();
-    auto offsets = getKickOffsets(tetromino.getType(), oldRotation, clockwise);
+    auto offsets = getKickOffsets(tetromino.getType(), oldRotation, rotation > 0);
     for (const auto& offset : offsets) {
         Tetromino testTetromino = tetromino;
         testTetromino.setRotationState(nextRotation);

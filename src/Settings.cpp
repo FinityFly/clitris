@@ -11,7 +11,7 @@
 float Settings::ARR = 0.5f; // 0-100ms: 0ms
 float Settings::DAS = 8.f; // 20-300ms: 100ms
 float Settings::DCD = 1.f; // 0-300ms: 50ms
-float Settings::SDF = 99.f; // 0-100ms: 0 is instant drop
+float Settings::SDF = 0.f; // 0-100ms: 0 is instant drop
 
 std::unordered_map<std::string, std::vector<int>> Settings::keyBindings = {
     {"LEFT",    {260, 106}},         // left arrow key, j key
