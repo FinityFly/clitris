@@ -49,7 +49,7 @@ jobs:
       - name: Create tarball
         run: |
           mkdir clitris-${{ steps.bump.outputs.new_tag }}
-          cp -r * clitris-${{ steps.bump.outputs.new_tag }}/
+          rsync -av --exclude "clitris-${{ steps.bump.outputs.new_tag }}" ./ clitris-${{ steps.bump.outputs.new_tag }}/
           tar -czf clitris-${{ steps.bump.outputs.new_tag }}.tar.gz clitris-${{ steps.bump.outputs.new_tag }}
 
       # Create GitHub Release
