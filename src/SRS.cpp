@@ -3,7 +3,7 @@
 
 std::tuple<int, int, int> SRS::rotate(const Tetromino& tetromino, const std::vector<std::vector<int>>& board, bool clockwise) {
     // O-piece: no rotation, no kicks
-    if (tetromino.getType() == 'O' || tetromino.getType() == 'o') {
+    if (tetromino.getType() == 'O') {
         return std::make_tuple(tetromino.getX(), tetromino.getY(), 0);
     }
     int numStates = tetromino.getShapesCount();
@@ -16,9 +16,9 @@ std::tuple<int, int, int> SRS::rotate(const Tetromino& tetromino, const std::vec
         Tetromino testTetromino = tetromino;
         testTetromino.setRotationState(nextRotation);
         testTetromino.setX(oldX + offset.first);
-        testTetromino.setY(oldY + offset.second);
+        testTetromino.setY(oldY - offset.second);
         if (isValidPosition(testTetromino, board)) {
-            return std::make_tuple(oldX + offset.first, oldY + offset.second, nextRotation);
+            return std::make_tuple(oldX + offset.first, oldY - offset.second, nextRotation);
         }
     }
     return std::make_tuple(oldX, oldY, oldRotation);
@@ -60,10 +60,10 @@ std::vector<std::pair<int, int>> SRS::getKickOffsets(char type, int rotationStat
             return I_CCW[rotationState % 4];
         }
     } else if (
-        type == 'T' ||
         type == 'J' ||
         type == 'L' ||
         type == 'S' ||
+        type == 'T' ||
         type == 'Z'
     ) {
         if (clockwise) {
