@@ -259,7 +259,6 @@ void Game::handleInput(const Settings& settings, int ch) {
                         lastRotation = 0;
                     }
                 } else if (action == "HARD_DROP") {
-                    processLineClear();
                     Tetromino moved = currentPiece;
                     while (GameUtils::canPlace(moved, board)) {
                         currentPiece.setY(moved.getY());
@@ -267,6 +266,7 @@ void Game::handleInput(const Settings& settings, int ch) {
                     }
                     GameUtils::placePiece(currentPiece, board);
                     lastRotation = 0;
+                    processLineClear();
 
                     newPiece();
 

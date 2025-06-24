@@ -1,0 +1,72 @@
+name: Auto Release and Homebrew Update
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  bump-tag-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # Get latest tag and bump patch version
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          latest=$(git tag --sort=-v:refname | head -n1)
+          if [[ -z "$latest" ]]; then
+            latest="v0.0.0"
+          fi
+          echo "latest_tag=$latest" >> $GITHUB_OUTPUT
+
+      - name: Bump version
+        id: bump
+        run: |
+          latest="${{ steps.get_tag.outputs.latest_tag }}"
+          IFS='.' read -r -a parts <<< "${latest#v}"
+          major="${parts[0]}"
+          minor="${parts[1]}"
+          patch="${parts[2]}"
+          patch=$((patch + 1))
+          new_tag="v$major.$minor.$patch"
+          echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+
+      # Create and push new tag
+      - name: Create and push tag
+        run: |
+          git config user.name "FinityFly"
+          git config user.email "daniel1211.lu@gmail.com"
+          git tag ${{ steps.bump.outputs.new_tag }}
+          git push origin ${{ steps.bump.outputs.new_tag }}
+
+      # Prepare tarball for release
+      - name: Create tarball
+        run: |
+          mkdir clitris-${{ steps.bump.outputs.new_tag }}
+          cp -r * clitris-${{ steps.bump.outputs.new_tag }}/
+          tar -czf clitris-${{ steps.bump.outputs.new_tag }}.tar.gz clitris-${{ steps.bump.outputs.new_tag }}
+
+      # Create GitHub Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.bump.outputs.new_tag }}
+          files: clitris-${{ steps.bump.outputs.new_tag }}.tar.gz
+
+      # Trigger tap update
+      - name: Dispatch update to tap
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          repository: FinityFly/homebrew-tap
+          event-type: clitris_release
+          client-payload: |
+            {
+              "tarball_url": "https://github.com/FinityFly/clitris/releases/download/${{ steps.bump.outputs.new_tag }}/clitris-${{ steps.bump.outputs.new_tag }}.tar.gz",
+              "version": "${{ steps.bump.outputs.new_tag }}"
+            }
