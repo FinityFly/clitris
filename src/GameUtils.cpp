@@ -78,23 +78,18 @@ bool GameUtils::isPerfectClear(const std::vector<std::vector<int>>& board) {
 }
 
 int GameUtils::countFilledCorners(const Tetromino& piece, const std::vector<std::vector<int>>& board) {
-    if (piece.getType() != 5) return 0; // Only T pieces can T-Spin
-    
-    int centerX = piece.getX();
-    int centerY = piece.getY();
+    if (piece.getType() != 'T') return 0;
+
     int cornersFilled = 0;
-    
-    constexpr std::array<std::pair<int, int>, 4> corners = {{
-        {-1, -1}, {1, -1}, {-1, 1}, {1, 1} // Relative to center
+    const std::vector<std::pair<int, int>> corners = {{
+        {-1, -1}, {1, -1}, {-1, 1}, {1, 1}
     }};
-    
+
     for (const auto& [dx, dy] : corners) {
-        int x = centerX + dx;
-        int y = centerY + dy;
+        int x = piece.getX() + dx + 1;
+        int y = piece.getY() + dy + 1;
         
-        if (y < 0 || y >= (int)board.size() || 
-            x < 0 || x >= (int)board[0].size() || 
-            board[y][x] != 0) {
+        if (board[y][x] != 0) {
             cornersFilled++;
         }
     }
@@ -102,26 +97,20 @@ int GameUtils::countFilledCorners(const Tetromino& piece, const std::vector<std:
     return cornersFilled;
 }
 
-bool GameUtils::isTSpin(const Tetromino& piece, const std::vector<std::vector<int>>& board) {
-    return piece.getType() == 5 && countFilledCorners(piece, board) >= 3;
-}
-
-bool GameUtils::isTSpinMini(const Tetromino& piece, const std::vector<std::vector<int>>& board, bool wallKickOccurred) {
-    return piece.getType() == 5 && 
-           countFilledCorners(piece, board) == 2 && 
-           wallKickOccurred;
-}
-
-GameUtils::ClearInfo GameUtils::checkClearConditions(const Tetromino& piece, 
-                                                  std::vector<std::vector<int>>& board,
-                                                  bool wallKickOccurred) {
+GameUtils::ClearInfo GameUtils::checkClearConditions(const Tetromino& piece, std::vector<std::vector<int>>& board, int lastRotation) {
     ClearInfo info{};
     
-    // Check for T-Spin before clearing lines
-    info.tspin = isTSpin(piece, board);
-    info.mini = !info.tspin && isTSpinMini(piece, board, wallKickOccurred);
+    // tspin checks
+    if (piece.getType() != 'T') {
+        info.tspin = 0;
+        info.mini = 0;
+    } else if (lastRotation > 0) {
+        int cornersFilled = countFilledCorners(piece, board);
+        info.tspin = cornersFilled >= 3;
+        info.mini = cornersFilled == 2 && (lastRotation == 2);
+    }
     
-    // Clear lines and check perfect clear
+    // lines and pc checks
     info.lines = clearLines(board);
     info.pc = info.lines > 0 && isPerfectClear(board);
     
@@ -154,7 +143,7 @@ int GameUtils::calculateScore(const ClearInfo& info, int b2bStreak, int combo) {
     
     // Combo bonus
     if (combo > 0) {
-        points += combo * 50;
+        points += static_cast<int>(50 * std::pow(combo, 1.5));
     }
     
     // Perfect clear bonus

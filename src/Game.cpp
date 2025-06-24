@@ -26,7 +26,7 @@ void Game::reset() {
     bag.erase(bag.begin());
     holdPiece = NULL;
     holdAvailable = true;
-    lastRotationWasKick = false;
+    lastRotation = 0;
     statistics = {
         {"totalPieces", 0},
         {"score", 0},
@@ -45,8 +45,7 @@ void Game::reset() {
         {"perfect_clears", 0}
     };
     lastFallTime = std::chrono::steady_clock::now();
-    std::time_t now = std::time(nullptr);
-    // fout << "Game initialized at " << std::ctime(&now);
+    gameStart = std::chrono::steady_clock::now();
 }
 
 void Game::newPiece() {
@@ -57,14 +56,18 @@ void Game::newPiece() {
         bag.insert(bag.end(), newBag.begin(), newBag.end());
     }
     statistics["totalPieces"]++;
-    statistics["combo"] = 0;
+
+    if (!GameUtils::canPlace(currentPiece, board)) {
+        isRunning = false;
+        reset();
+    }
 }
 
 Game::Game()
     : isRunning(false),
       board(40, std::vector<int>(10, 0)),
       fallDelay(500),
-      fout("tetris_log.txt", std::ios::trunc) {
+      gameStart(std::chrono::steady_clock::now()) {
     reset();
 }
 
@@ -216,23 +219,32 @@ void Game::handleInput(const Settings& settings, int ch) {
                 if (action == "ROTATE_CW") {
                     Tetromino rotated = currentPiece;
                     rotated.rotateCW(board);
-                    lastRotationWasKick = !GameUtils::canPlace(rotated, board);
+                    bool kicked = !GameUtils::canPlace(rotated, board);
                     if (GameUtils::canPlace(rotated, board)) {
                         currentPiece.rotateCW(board);
+                        lastRotation = kicked ? 2 : 1;
+                    } else {
+                        lastRotation = 0;
                     }
                 } else if (action == "ROTATE_CCW") {
                     Tetromino rotated = currentPiece;
                     rotated.rotateCCW(board);
-                    lastRotationWasKick = !GameUtils::canPlace(rotated, board);
+                    bool kicked = !GameUtils::canPlace(rotated, board);
                     if (GameUtils::canPlace(rotated, board)) {
                         currentPiece.rotateCCW(board);
+                        lastRotation = kicked ? 2 : 1;
+                    } else {
+                        lastRotation = 0;
                     }
                 } else if (action == "FLIP") {
                     Tetromino rotated = currentPiece;
                     rotated.rotate180(board);
-                    lastRotationWasKick = !GameUtils::canPlace(rotated, board);
+                    bool kicked = !GameUtils::canPlace(rotated, board);
                     if (GameUtils::canPlace(rotated, board)) {
                         currentPiece.rotate180(board);
+                        lastRotation = kicked ? 2 : 1;
+                    } else {
+                        lastRotation = 0;
                     }
                 } else if (action == "HOLD") {
                     if (holdAvailable) {
@@ -244,16 +256,17 @@ void Game::handleInput(const Settings& settings, int ch) {
                             Game::newPiece();
                         }
                         holdAvailable = false;
+                        lastRotation = 0;
                     }
                 } else if (action == "HARD_DROP") {
+                    processLineClear();
                     Tetromino moved = currentPiece;
                     while (GameUtils::canPlace(moved, board)) {
                         currentPiece.setY(moved.getY());
                         moved.setY(moved.getY() + 1);
                     }
                     GameUtils::placePiece(currentPiece, board);
-                    processLineClear();
-                    lastRotationWasKick = false;
+                    lastRotation = 0;
 
                     newPiece();
 
@@ -272,14 +285,31 @@ void Game::handleInput(const Settings& settings, int ch) {
         }
     }
     refresh();
+
+    Tetromino moved = currentPiece;
+    moved.setY(currentPiece.getY() + 1);
+
+    // reset lock delay if piece falling
+    if (!GameUtils::canPlace(moved, board)) {
+        lockDelayActive = false;
+    }
 }
 
 void Game::processLineClear() {
-    auto clearInfo = GameUtils::checkClearConditions(currentPiece, board, lastRotationWasKick);
+    auto clearInfo = GameUtils::checkClearConditions(currentPiece, board, lastRotation);
+    int score = GameUtils::calculateScore(clearInfo, statistics["b2bStreak"], statistics["combo"]);
 
+    statistics["score"] += score;
+    statistics["lines"] += clearInfo.lines;
     if (clearInfo.lines > 0) {
         statistics["combo"] = std::max(0, statistics["combo"]) + 1;
-        if (clearInfo.lines == 1) {
+        if (clearInfo.pc) {
+            statistics["perfect_clears"]++;
+        } else if (clearInfo.tspin) {
+            statistics["tspins"]++;
+        } else if (clearInfo.mini) {
+            statistics["tspin_minis"]++;
+        } else if (clearInfo.lines == 1) {
             statistics["single"]++;
         } else if (clearInfo.lines == 2) {
             statistics["double"]++;
@@ -288,25 +318,18 @@ void Game::processLineClear() {
         } else if (clearInfo.lines == 4) {
             statistics["tetris"]++;
         }
-        if (clearInfo.tspin) {
-            statistics["tspins"]++;
-        }
-        if (clearInfo.mini) {
-            statistics["tspin_minis"]++;
-        }
-        if (clearInfo.pc) {
-            statistics["pc"]++;
-        }
         if (clearInfo.lines == 4 || clearInfo.tspin || clearInfo.mini || clearInfo.pc) {
             statistics["b2bStreak"]++;
+            statistics["max_b2bStreak"] = std::max(statistics["max_b2bStreak"], statistics["b2bStreak"]);
         } else {
             statistics["b2bStreak"] = 0;
         }
+        statistics["max_combo"] = std::max(statistics["max_combo"], statistics["combo"]);
     } else {
         statistics["combo"] = 0;
     }
 
-    updateStatistics(clearInfo);
+    generatePopup(clearInfo);
 
     holdAvailable = true;
     lastFallTime = std::chrono::steady_clock::now();
@@ -318,31 +341,10 @@ void Game::showPopup(const std::string& text, float durationSeconds) {
     popupDurationSeconds = durationSeconds;
 }
 
-void Game::updateStatistics(const GameUtils::ClearInfo& info) {
-    // Calculate score using GameUtils
-    int score = GameUtils::calculateScore(info, statistics["b2bStreak"], statistics["combo"]);
-    statistics["score"] += score;
-    statistics["lines"] += info.lines;
-    
-    if (info.tspin) {
-        statistics["tspins"]++;
-    }
-    if (info.mini) {
-        statistics["tspin_minis"]++;
-    }
-    if (statistics["b2bStreak"] > statistics["max_b2bStreak"]) {
-        statistics["max_b2bStreak"] = statistics["b2bStreak"];
-    }
-    if (statistics["combo"] > statistics["max_combo"]) {
-        statistics["max_combo"] = statistics["combo"];
-    }
-    if (info.pc) {
-        statistics["pc"]++;
-    }
-
+void Game::generatePopup(const GameUtils::ClearInfo& info) {
     std::string popupText = "";
 
-    if (statistics["b2bStreak"] > 1) {
+    if (info.lines > 0 && statistics["b2bStreak"] > 1) {
         popupText += std::to_string(statistics["b2bStreak"]) + "x B2B ";
     }
 
@@ -359,33 +361,47 @@ void Game::updateStatistics(const GameUtils::ClearInfo& info) {
         popupText += "TETRIS ";
     } else if (info.mini) {
         popupText += "MINI ";
+    } else if (info.pc) {
+        popupText += "PERFECT CLEAR ";
     }
-
-    if (info.pc) popupText += "PERFECT CLEAR ";
 
     if (!popupText.empty()) popupText += "!";
 
-    if (statistics["combo"] > 1) popupText += "\t" + std::to_string(statistics["combo"]) + "x COMBO!";
+    if (statistics["combo"] > 1) {
+        popupText += "\n" + std::to_string(statistics["combo"]) + "x COMBO !";
+    }
 
     showPopup(popupText);
 }
 
 void Game::update() {
     auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastFallTime).count() >= fallDelay) {
-        Tetromino moved = currentPiece;
-        moved.setY(currentPiece.getY() + 1);
-        if (GameUtils::canPlace(moved, board)) {
-            currentPiece.setY(currentPiece.getY() + 1);
-        } else {
-            GameUtils::placePiece(currentPiece, board);
-            
-            newPiece();
 
-            holdAvailable = true;
-            processLineClear();
+    Tetromino moved = currentPiece;
+    moved.setY(currentPiece.getY() + 1);
+
+    if (!GameUtils::canPlace(moved, board)) {
+        // Piece is on the ground: lock delay logic only
+        if (!lockDelayActive) {
+            lockDelayActive = true;
+            lockStartTime = now;
         }
-        lastFallTime = now;
+        if (lockDelayActive && std::chrono::duration_cast<std::chrono::milliseconds>(now - lockStartTime).count() >= lockDelayMs) {
+            GameUtils::placePiece(currentPiece, board);
+            processLineClear();
+            newPiece();
+            holdAvailable = true;
+            lastRotation = 0;
+            lockDelayActive = false;
+            lastFallTime = now;
+        }
+    } else {
+        // Piece is not on the ground: gravity logic only
+        lockDelayActive = false;
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastFallTime).count() >= fallDelay) {
+            currentPiece.setY(currentPiece.getY() + 1);
+            lastFallTime = now;
+        }
     }
 }
 
@@ -434,7 +450,6 @@ void Game::render() {
     int stats_x = hold_x - 2;
     WINDOW* statswin = newwin(stats_height, stats_width, stats_y, stats_x);
 
-    static auto gameStart = std::chrono::steady_clock::now();
     double seconds = std::chrono::duration<double>(now - gameStart).count();
     UI::renderStatsWindow(statswin, statistics, seconds);
     wrefresh(statswin);
@@ -465,14 +480,29 @@ void Game::render() {
     wrefresh(handlingwin);
 
     // popup text
-    int popup_y = stats_y + stats_height + 2;
-    int popup_x = start_x - popupText.size() - 1;
+    std::vector<std::string> lines;
+    size_t maxLen = 0;
+    size_t pos = 0, prev = 0;
+    while ((pos = popupText.find('\n', prev)) != std::string::npos) {
+        lines.emplace_back(popupText.substr(prev, pos - prev));
+        prev = pos + 1;
+    }
+    lines.emplace_back(popupText.substr(prev));
+    for (const auto& l : lines) maxLen = std::max(maxLen, l.size());
 
+    int popup_y = stats_y + stats_height + 2;
+    int popup_x = start_x - (int)maxLen - 1;
     if (!popupText.empty() && std::chrono::duration<double>(now - popupStartTime).count() < popupDurationSeconds) {
-        mvprintw(popup_y, popup_x, "%s", popupText.c_str());
+        for (size_t i = 0; i < lines.size(); ++i) {
+            int line_x = popup_x + (int)(maxLen - lines[i].size());
+            mvprintw(popup_y + (int)i, line_x, "%s", lines[i].c_str());
+        }
     } else {
-        std::string blank(popupText.size(), ' ');
-        mvprintw(popup_y, popup_x, "%s", blank.c_str());
+        for (size_t i = 0; i < lines.size(); ++i) {
+            int line_x = popup_x + (int)(maxLen - lines[i].size());
+            std::string spaces(lines[i].size(), ' ');
+            mvprintw(popup_y + (int)i, line_x, "%s", spaces.c_str());
+        }
         popupText.clear();
     }
 

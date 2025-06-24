@@ -94,8 +94,8 @@ void UI::renderStatsWindow(WINDOW* win, const std::unordered_map<std::string, in
     double pps = (seconds > 0) ? (statistics.at("totalPieces") / seconds) : 0.0;
     double sps = (seconds > 0) ? (statistics.at("score") / seconds) : 0.0;
 
-    int width, height;
-    getmaxyx(win, height, width);
+    int width;
+    getmaxyx(win, std::ignore, width);
 
     auto print_stat = [&](int row, const char* label, const char* fmt, auto value) {
         char valbuf[32];

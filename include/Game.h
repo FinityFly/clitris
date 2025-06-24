@@ -6,7 +6,6 @@
 #include <vector>
 #include <unordered_map>
 #include <chrono>
-#include <fstream>
 #include <queue>
 #include <unordered_set>
 
@@ -33,7 +32,7 @@ private:
     Tetromino currentPiece;
     Tetromino holdPiece;
     bool holdAvailable;
-    bool lastRotationWasKick = false;
+    int lastRotation = 0;
     std::unordered_map<std::string, int> statistics = {
         {"totalPieces", 0},
         {"score", 0},
@@ -49,7 +48,6 @@ private:
 
     int fallDelay; // ms
     std::chrono::steady_clock::time_point lastFallTime;
-    std::ofstream fout;
     std::queue<int> inputQueue;
     bool leftHeld = false;
     bool rightHeld = false;
@@ -58,11 +56,16 @@ private:
     std::string popupText;
     std::chrono::steady_clock::time_point popupStartTime;
     float popupDurationSeconds = 0.0;
+    std::chrono::steady_clock::time_point gameStart;
+
+    std::chrono::steady_clock::time_point lockStartTime;
+    bool lockDelayActive = false;
+    const int lockDelayMs = 1000; // ms
 
     void handleInput(const Settings& settings, int ch);
     void clearLines();
     void processLineClear();
-    void updateStatistics(const GameUtils::ClearInfo& info);
+    void generatePopup(const GameUtils::ClearInfo& info);
     void showPopup(const std::string& text, float durationSeconds = 2.0);
 };
 

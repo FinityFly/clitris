@@ -27,10 +27,8 @@ public:
     static bool isPerfectClear(const std::vector<std::vector<int>>& board);
 
     static int countFilledCorners(const Tetromino& piece, const std::vector<std::vector<int>>& board);
-    static bool isTSpin(const Tetromino& piece, const std::vector<std::vector<int>>& board);
-    static bool isTSpinMini(const Tetromino& piece, const std::vector<std::vector<int>>& board, bool wallKickOccurred);
 
-    static ClearInfo checkClearConditions(const Tetromino& piece, std::vector<std::vector<int>>& board, bool wallKickOccurred);
+    static ClearInfo checkClearConditions(const Tetromino& piece, std::vector<std::vector<int>>& board, int lastRotation);
     static int calculateScore(const ClearInfo& info, int b2bStreak, int combo);
 };
 
