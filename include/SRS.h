@@ -9,7 +9,7 @@
 class SRS {
 public:
     // Returns std::optional<tuple<newX, newY, newRotationState>>
-    static std::tuple<int, int, int> rotate(const Tetromino& tetromino, const std::vector<std::vector<int>>& board, bool clockwise);
+    static std::tuple<int, int, int> rotate(const Tetromino& tetromino, const std::vector<std::vector<int>>& board, int rotation);
 
 private:
     static std::vector<std::pair<int, int>> getKickOffsets(char type, int rotationState, bool clockwise);

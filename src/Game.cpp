@@ -109,12 +109,10 @@ void Game::run(const Settings& settings) {
                                 // From neutral, use DAS
                                 leftInitial = true;
                                 leftDCD = false;
-                                lastLeft = std::chrono::steady_clock::now();
                             } else if (lastDirection != -1) {
                                 // Switching direction, use DCD
                                 leftDCD = true;
                                 leftInitial = false;
-                                lastLeft = std::chrono::steady_clock::now();
                             }
                             leftHeld = true;
                             sawLeft = true;
@@ -123,11 +121,9 @@ void Game::run(const Settings& settings) {
                             if (!rightHeld) {
                                 rightInitial = true;
                                 rightDCD = false;
-                                lastRight = std::chrono::steady_clock::now();
                             } else if (lastDirection != 1) {
                                 rightDCD = true;
                                 rightInitial = false;
-                                lastRight = std::chrono::steady_clock::now();
                             }
                             rightHeld = true;
                             sawRight = true;
@@ -135,7 +131,6 @@ void Game::run(const Settings& settings) {
                         } else if (action == "SOFT_DROP") {
                             softDropHeld = true;
                             sawSoftDrop = true;
-                            lastSoftDrop = std::chrono::steady_clock::now();
                         } else {
                             handleInput(settings, ch);
                         }
@@ -153,6 +148,11 @@ void Game::run(const Settings& settings) {
         auto rightDuration = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastRight).count();
         auto softDropDuration = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastSoftDrop).count();
 
+        // std::string softDropStr = "SoftDrop: " + std::to_string(softDropDuration) + " ms";
+        // int log_y = LINES - 2;
+        // int log_x = 1;
+        // mvprintw(log_y, log_x, "%s", softDropStr.c_str());
+
         // Left movement logic
         if (leftHeld && (!rightHeld || lastDirection == -1)) {
             float delay = leftInitial ? das : (leftDCD ? dcd : arr);
@@ -161,8 +161,8 @@ void Game::run(const Settings& settings) {
                 moved.moveLeft();
                 if (GameUtils::canPlace(moved, board)) {
                     currentPiece.moveLeft();
+                    lastLeft = now;
                 }
-                lastLeft = now;
                 if (leftInitial) leftInitial = false;
                 if (leftDCD) leftDCD = false;
             }
@@ -179,8 +179,8 @@ void Game::run(const Settings& settings) {
                 moved.moveRight();
                 if (GameUtils::canPlace(moved, board)) {
                     currentPiece.moveRight();
+                    lastRight = now;
                 }
-                lastRight = now;
                 if (rightInitial) rightInitial = false;
                 if (rightDCD) rightDCD = false;
             }
@@ -191,13 +191,14 @@ void Game::run(const Settings& settings) {
 
         // Soft drop logic
         if (softDropHeld) {
-            if (softDropInitial || softDropDuration >= sdf) { // only using softDropInitial
+            // if (softDropInitial || softDropDuration >= sdf) { // only using softDropInitial
+            if (softDropDuration >= sdf) {
                 Tetromino moved = currentPiece;
                 moved.setY(currentPiece.getY() + 1);
                 if (GameUtils::canPlace(moved, board)) {
                     currentPiece.setY(currentPiece.getY() + 1);
+                    lastSoftDrop = now;
                 }
-                lastSoftDrop = now;
                 softDropInitial = false;
             }
         } else {

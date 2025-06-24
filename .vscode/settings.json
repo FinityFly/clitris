@@ -50,6 +50,7 @@
         "iomanip": "cpp",
         "sstream": "cpp",
         "unordered_set": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "bit": "cpp"
     }
 }
