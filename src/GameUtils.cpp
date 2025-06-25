@@ -57,8 +57,7 @@ void GameUtils::placePiece(const Tetromino& piece, std::vector<std::vector<int>>
 int GameUtils::clearLines(std::vector<std::vector<int>>& board) {
     int linesCleared = 0;
     for (int y = (int)board.size() - 1; y >= 0; --y) {
-        bool full = std::all_of(board[y].begin(), board[y].end(), 
-                               [](int cell) { return cell != 0; });
+        bool full = std::all_of(board[y].begin(), board[y].end(), [](int cell) { return cell != 0; });
         
         if (full) {
             board.erase(board.begin() + y);
@@ -71,10 +70,14 @@ int GameUtils::clearLines(std::vector<std::vector<int>>& board) {
 }
 
 bool GameUtils::isPerfectClear(const std::vector<std::vector<int>>& board) {
-    return std::all_of(board.begin(), board.end(), 
-        [](const std::vector<int>& row) {
-            return std::all_of(row.begin(), row.end(), [](int cell) { return cell == 0; });
-        });
+    for (const auto& row : board) {
+        for (int cell : row) {
+            if (cell != 0) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 int GameUtils::countFilledCorners(const Tetromino& piece, const std::vector<std::vector<int>>& board) {
@@ -88,8 +91,8 @@ int GameUtils::countFilledCorners(const Tetromino& piece, const std::vector<std:
     for (const auto& [dx, dy] : corners) {
         int x = piece.getX() + dx + 1;
         int y = piece.getY() + dy + 1;
-        
-        if (board[y][x] != 0) {
+
+        if (x < 0 || x >= 10 || y < 0 || y >= 40 || board[y][x] != 0) {
             cornersFilled++;
         }
     }
@@ -104,7 +107,7 @@ GameUtils::ClearInfo GameUtils::checkClearConditions(const Tetromino& piece, std
     if (piece.getType() != 'T') {
         info.tspin = 0;
         info.mini = 0;
-    } else if (lastRotation > 0) {
+    } else if (piece.getType() == 'T' && lastRotation > 0) {
         int cornersFilled = countFilledCorners(piece, board);
         info.tspin = cornersFilled >= 3;
         info.mini = cornersFilled == 2 && (lastRotation == 2);
@@ -112,7 +115,7 @@ GameUtils::ClearInfo GameUtils::checkClearConditions(const Tetromino& piece, std
     
     // lines and pc checks
     info.lines = clearLines(board);
-    info.pc = info.lines > 0 && isPerfectClear(board);
+    info.pc = (info.lines > 0) && (isPerfectClear(board));
     
     return info;
 }
@@ -137,7 +140,7 @@ int GameUtils::calculateScore(const ClearInfo& info, int b2bStreak, int combo) {
     }
     
     // B2B bonus
-    if (b2bStreak > 0 && (info.lines == 4 || (info.tspin && info.lines > 0))) {
+    if (b2bStreak > 0 && (info.lines == 4 || (info.tspin && info.lines > 0) || info.mini || info.pc)) {
         points = static_cast<int>(points * (1.0 + 0.5 * std::sqrt(b2bStreak)));
     }
     

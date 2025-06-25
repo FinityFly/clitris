@@ -42,7 +42,6 @@ void Game::reset() {
         {"max_b2bStreak", 0},
         {"combo", 0},
         {"max_combo", 0},
-        {"perfect_clears", 0}
     };
     lastFallTime = std::chrono::steady_clock::now();
     gameStart = std::chrono::steady_clock::now();
@@ -305,8 +304,9 @@ void Game::processLineClear() {
     if (clearInfo.lines > 0) {
         statistics["combo"] = std::max(0, statistics["combo"]) + 1;
         if (clearInfo.pc) {
-            statistics["perfect_clears"]++;
-        } else if (clearInfo.tspin) {
+            statistics["pc"]++;
+        }
+        if (clearInfo.tspin) {
             statistics["tspins"]++;
         } else if (clearInfo.mini) {
             statistics["tspin_minis"]++;
@@ -352,7 +352,9 @@ void Game::generatePopup(const GameUtils::ClearInfo& info) {
     if (info.tspin || info.mini) {
         popupText += "T-SPIN ";
     }
-    if (info.lines == 1) {
+    if (info.pc) {
+        popupText += "PERFECT CLEAR ";
+    } else if (info.lines == 1) {
         popupText += "SINGLE ";
     } else if (info.lines == 2) {
         popupText += "DOUBLE ";
@@ -362,8 +364,6 @@ void Game::generatePopup(const GameUtils::ClearInfo& info) {
         popupText += "TETRIS ";
     } else if (info.mini) {
         popupText += "MINI ";
-    } else if (info.pc) {
-        popupText += "PERFECT CLEAR ";
     }
 
     if (!popupText.empty()) popupText += "!";
@@ -493,6 +493,8 @@ void Game::render() {
 
     int popup_y = stats_y + stats_height + 2;
     int popup_x = start_x - (int)maxLen - 1;
+    int popup_line_width = term_cols - popup_x;
+    
     if (!popupText.empty() && std::chrono::duration<double>(now - popupStartTime).count() < popupDurationSeconds) {
         for (size_t i = 0; i < lines.size(); ++i) {
             int line_x = popup_x + (int)(maxLen - lines[i].size());
@@ -500,9 +502,8 @@ void Game::render() {
         }
     } else {
         for (size_t i = 0; i < lines.size(); ++i) {
-            int line_x = popup_x + (int)(maxLen - lines[i].size());
-            std::string spaces(lines[i].size(), ' ');
-            mvprintw(popup_y + (int)i, line_x, "%s", spaces.c_str());
+            std::string spaces(start_x, ' ');
+            mvprintw(popup_y + (int)i, 0, "%s", spaces.c_str());
         }
         popupText.clear();
     }
