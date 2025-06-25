@@ -32,7 +32,7 @@ private:
     Tetromino currentPiece;
     Tetromino holdPiece;
     bool holdAvailable;
-    int lastRotation = 0;
+    int lastRotation = 0; // 0 = no rotation, 1 = normal, 2 = kicked
     std::unordered_map<std::string, int> statistics = {
         {"totalPieces", 0},
         {"score", 0},
@@ -60,7 +60,7 @@ private:
 
     std::chrono::steady_clock::time_point lockStartTime;
     bool lockDelayActive = false;
-    const int lockDelayMs = 1000; // ms
+    const int lockDelayMs = 500; // ms
 
     void handleInput(const Settings& settings, int ch);
     void clearLines();

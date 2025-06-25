@@ -8,10 +8,10 @@
 
 #include "../include/Settings.h"
 
-float Settings::ARR = 0.5f; // 0-100ms: 0ms
-float Settings::DAS = 8.f; // 20-300ms: 100ms
-float Settings::DCD = 1.f; // 0-300ms: 50ms
-float Settings::SDF = 0.f; // 0-100ms: 0 is instant drop
+float Settings::ARR = 33.0f; // auto repeat rate (ms)
+float Settings::DAS = 100.0f; // delayed auto shift (ms)  
+float Settings::DCD = 0.0f; // das cut delay (ms)
+float Settings::SDF = 1.0f; // soft drop factor (ms)
 
 std::unordered_map<std::string, std::vector<int>> Settings::keyBindings = {
     {"LEFT",    {260, 106}},         // left arrow key, j key

@@ -32,9 +32,8 @@ void Menu::display() {
 
     std::atomic<int> lastInput{-1};
     bool running = true;
-    choice = -1; // Reset choice at start
+    choice = -1;
 
-    // Input thread
     std::thread inputThread([&lastInput, &running]() {
         while (running) {
             int ch = getch();
@@ -49,7 +48,6 @@ void Menu::display() {
     erase();
     refresh();
 
-    // Render loop
     while (running) {
         WINDOW* menuwin = newwin(box_height, box_width, starty, startx);
         box(menuwin, 0, 0);
