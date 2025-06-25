@@ -24,7 +24,7 @@ std::tuple<int, int, int> SRS::rotate(const Tetromino& tetromino, const std::vec
 }
 
 std::vector<std::pair<int, int>> SRS::getKickOffsets(char type, int rotationState, bool clockwise) {
-    // SRS kick data for JLSTZ pieces
+    // kick tests for JLSTZ pieces
     static const std::vector<std::vector<std::pair<int, int>>> JLSTZ_CW = {
         {{0, 0}, {-1, 0}, {-1, 1}, {0, -2}, {-1, -2}}, // 0 -> R
         {{0, 0}, {1, 0}, {1, -1}, {0, 2}, {1, 2}},     // R -> 2
@@ -38,7 +38,7 @@ std::vector<std::pair<int, int>> SRS::getKickOffsets(char type, int rotationStat
         {{0, 0}, {-1, 0}, {-1, -1}, {0, 2}, {-1, 2}}   // L -> 2
     };
 
-    // SRS kick data for I piece
+    // kick tests for I piece
     static const std::vector<std::vector<std::pair<int, int>>> I_CW = {
         {{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}},   // 0 -> R
         {{0, 0}, {-1, 0}, {2, 0}, {-1, 2}, {2, -1}},   // R -> 2

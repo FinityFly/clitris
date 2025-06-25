@@ -49,14 +49,14 @@ int main() {
         int choice = menu.getChoice();
 
         switch (choice) {
-            case 1: // Start Game
+            case 1: // start game
                 game.init();
                 game.run(settings);
                 break;
-            case 2: // Settings
+            case 2: // keybinds and handling
                 settings.configure();
                 break;
-            case 3: // Exit
+            case 3: // exit
                 running = false;
                 break;
             default:

@@ -8,7 +8,6 @@
 
 class SRS {
 public:
-    // Returns std::optional<tuple<newX, newY, newRotationState>>
     static std::tuple<int, int, int> rotate(const Tetromino& tetromino, const std::vector<std::vector<int>>& board, int rotation);
 
 private:

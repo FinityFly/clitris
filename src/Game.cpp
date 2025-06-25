@@ -105,11 +105,11 @@ void Game::run(const Settings& settings) {
                     if (ch == key) {
                         if (action == "LEFT") {
                             if (!leftHeld) {
-                                // From neutral, use DAS
+                                // from neutral, use DAS
                                 leftInitial = true;
                                 leftDCD = false;
                             } else if (lastDirection != -1) {
-                                // Switching direction, use DCD
+                                // switching direction, use DCD
                                 leftDCD = true;
                                 leftInitial = false;
                             }
@@ -152,7 +152,6 @@ void Game::run(const Settings& settings) {
         // int log_x = 1;
         // mvprintw(log_y, log_x, "%s", softDropStr.c_str());
 
-        // Left movement logic
         if (leftHeld && (!rightHeld || lastDirection == -1)) {
             float delay = leftInitial ? das : (leftDCD ? dcd : arr);
             if (leftInitial || leftDCD || leftDuration >= delay) { // only using leftInitial and leftDCD
@@ -170,7 +169,6 @@ void Game::run(const Settings& settings) {
             leftDCD = false;
         }
 
-        // Right movement logic
         if (rightHeld && (!leftHeld || lastDirection == 1)) {
             float delay = rightInitial ? das : (rightDCD ? dcd : arr);
             if (rightInitial || rightDCD || rightDuration >= delay) { // only using rightInitial and rightDCD
@@ -188,7 +186,6 @@ void Game::run(const Settings& settings) {
             rightDCD = false;
         }
 
-        // Soft drop logic
         if (softDropHeld) {
             // if (softDropInitial || softDropDuration >= sdf) { // only using softDropInitial
             if (softDropDuration >= sdf) {
@@ -211,7 +208,6 @@ void Game::run(const Settings& settings) {
 }
 
 void Game::handleInput(const Settings& settings, int ch) {
-    // Remove keyHeld logic for rotation/hold
     const auto& keyBindings = settings.getKeyBindings();
     for (const auto& [action, keys] : keyBindings) {
         for (int key : keys) {
@@ -277,7 +273,6 @@ void Game::handleInput(const Settings& settings, int ch) {
                     isRunning = false;
                     reset();
                 } else if (action == "RESTART") {
-                    // clear board and reset game state
                     reset();
                 }
                 refresh();
@@ -382,7 +377,7 @@ void Game::update() {
     moved.setY(currentPiece.getY() + 1);
 
     if (!GameUtils::canPlace(moved, board)) {
-        // Piece is on the ground: lock delay logic only
+        // on the ground: lock delay logic
         if (!lockDelayActive) {
             lockDelayActive = true;
             lockStartTime = now;
@@ -397,7 +392,7 @@ void Game::update() {
             lastFallTime = now;
         }
     } else {
-        // Piece is not on the ground: gravity logic only
+        // not on the ground: gravity logic
         lockDelayActive = false;
         if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastFallTime).count() >= fallDelay) {
             currentPiece.setY(currentPiece.getY() + 1);
@@ -422,7 +417,7 @@ void Game::render() {
 
     auto now = std::chrono::steady_clock::now();
 
-    // Board window
+    // board window
     WINDOW* boardwin = newwin(win_height, win_width, start_y, start_x);
     box(boardwin, 0, 0);
     UI::renderBoard(boardwin, board, cell_width);
@@ -493,8 +488,6 @@ void Game::render() {
 
     int popup_y = stats_y + stats_height + 2;
     int popup_x = start_x - (int)maxLen - 1;
-    int popup_line_width = term_cols - popup_x;
-    
     if (!popupText.empty() && std::chrono::duration<double>(now - popupStartTime).count() < popupDurationSeconds) {
         for (size_t i = 0; i < lines.size(); ++i) {
             int line_x = popup_x + (int)(maxLen - lines[i].size());

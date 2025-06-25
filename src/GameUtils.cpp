@@ -122,40 +122,31 @@ GameUtils::ClearInfo GameUtils::checkClearConditions(const Tetromino& piece, std
 
 int GameUtils::calculateScore(const ClearInfo& info, int b2bStreak, int combo) {
     int points = 0;
-    
-    // Base points
+    // revise to accurately reflect tetrio
     if (info.tspin) {
         points = info.lines == 1 ? 800 :
                  info.lines == 2 ? 1200 :
                  info.lines == 3 ? 1600 : 400;
-    } 
-    else if (info.mini) {
+    } else if (info.mini) {
         points = info.lines == 1 ? 200 : 100;
-    } 
-    else {
+    } else {
         points = info.lines == 1 ? 100 :
                  info.lines == 2 ? 300 :
                  info.lines == 3 ? 500 :
                  info.lines == 4 ? 800 : 0;
     }
     
-    // B2B bonus
     if (b2bStreak > 0 && (info.lines == 4 || (info.tspin && info.lines > 0) || info.mini || info.pc)) {
         points = static_cast<int>(points * (1.0 + 0.5 * std::sqrt(b2bStreak)));
     }
-    
-    // Combo bonus
     if (combo > 0) {
         points += static_cast<int>(50 * std::pow(combo, 1.5));
     }
-    
-    // Perfect clear bonus
     if (info.pc) {
         points += info.lines == 1 ? 1000 :
                   info.lines == 2 ? 3000 :
                   info.lines == 3 ? 5000 :
                   info.lines == 4 ? 8000 : 0;
     }
-    
     return points;
 }
