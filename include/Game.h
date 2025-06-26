@@ -35,15 +35,19 @@ private:
     int lastRotation = 0; // 0 = no rotation, 1 = normal, 2 = kicked
     std::unordered_map<std::string, int> statistics = {
         {"totalPieces", 0},
-        {"score", 0},
+        {"attack", 0},
         {"lines", 0},
+        {"single", 0},
+        {"double", 0},
+        {"triple", 0},
+        {"tetris", 0},
         {"tspins", 0},
         {"tspin_minis", 0},
+        {"pc", 0},
         {"b2bStreak", 0},
         {"max_b2bStreak", 0},
         {"combo", 0},
         {"max_combo", 0},
-        {"perfect_clears", 0}
     };
 
     int fallDelay; // ms

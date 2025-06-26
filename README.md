@@ -85,7 +85,7 @@ sudo mv tetris /usr/local/bin/clitris  # optional
 ## 🎯 Quick Start
 
 ```bash
-clitris  # or ./tetris if built locally
+clitris  # or ./clitris if built locally
 ```
 
 ## 🎮 Controls
