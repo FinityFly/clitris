@@ -43,10 +43,14 @@ int main() {
     bool running = true;
 
     while (running) {
-        erase();
+        clear();
         refresh();
+        
         menu.display();
         int choice = menu.getChoice();
+
+        clear();
+        refresh();
 
         switch (choice) {
             case 1: // start game
