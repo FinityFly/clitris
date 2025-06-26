@@ -8,9 +8,9 @@
 
 #include "../include/Settings.h"
 
-float Settings::ARR = 33.0f; // auto repeat rate (ms)
-float Settings::DAS = 100.0f; // delayed auto shift (ms)  
-float Settings::DCD = 0.0f; // das cut delay (ms)
+float Settings::ARR = 10.0f; // auto repeat rate (ms)
+float Settings::DAS = 50.0f; // delayed auto shift (ms)  
+float Settings::DCD = 33.0f; // das cut delay (ms)
 float Settings::SDF = 1.0f; // soft drop factor (ms)
 
 std::unordered_map<std::string, std::vector<int>> Settings::keyBindings = {
@@ -58,10 +58,10 @@ void Settings::configure() {
     };
 
     std::pair<std::string, float*> prompts[] = {
-        {"Enter ARR (0.1-10.0)", &ARR},
-        {"Enter DAS (0.1-10.0)", &DAS},
-        {"Enter DCD (0.1-10.0)", &DCD},
-        {"Enter SDF (0.1-10.0, 99.0)", &SDF}
+        {"Enter ARR (0.1-99.0)", &ARR},
+        {"Enter DAS (0.1-99.0)", &DAS},
+        {"Enter DCD (0.1-99.0)", &DCD},
+        {"Enter SDF (0.1-99.0)", &SDF}
     };
 
     int prompt_idx = 0;
