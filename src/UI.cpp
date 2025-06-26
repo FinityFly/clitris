@@ -2,13 +2,14 @@
 #include "../include/GameUtils.h"
 #include "../include/Settings.h"
 
-void UI::renderBoard(WINDOW* win, const std::vector<std::vector<int>>& board, int cell_width) {
-    int board_height = board.size();
-    int board_width = board[0].size();
+void UI::renderBoard(WINDOW* win, const std::vector<std::vector<int>>& board, int board_height, int board_width, int cell_width) {
+    // Only render the bottom 20 rows of the 40-row board (rows 20-39)
+    int start_row = 20; // Skip the top 20 hidden rows
     for (int y = 0; y < board_height; ++y) {
+        int board_y = start_row + y; // Map display row to actual board row
         for (int x = 0; x < board_width; ++x) {
             int draw_x = x * cell_width + 1;
-            char val = board[y][x];
+            char val = board[board_y][x];
             if (val != 0) {
                 wattron(win, COLOR_PAIR(val));
                 for (int i = 0; i < cell_width; ++i)
@@ -33,18 +34,22 @@ void UI::renderTetromino(WINDOW* win, const Tetromino& tetromino, int cell_width
         for (int x = 0; x < (int)shape[y].size(); ++x) {
             if (shape[y][x]) {
                 int bx = px + x;
-                int by = py + y;
+                int by = py + y - 20; // Adjust for 20-row offset (subtract hidden rows)
                 int draw_x = bx * cell_width + 1;
-                if (ghost) {
-                    wattron(win, COLOR_PAIR(color) | A_BOLD);
-                    mvwaddch(win, by + 1, draw_x, '.');
-                    mvwaddch(win, by + 1, draw_x + 1, '.');
-                    wattroff(win, COLOR_PAIR(color) | A_BOLD);
-                } else {
-                    wattron(win, COLOR_PAIR(color));
-                    mvwaddch(win, by + 1, draw_x, ' ');
-                    mvwaddch(win, by + 1, draw_x + 1, ' ');
-                    wattroff(win, COLOR_PAIR(color));
+                
+                // Only draw if the piece is in the visible area (rows 20-39 of board)
+                if (by >= 0 && by < 20) {
+                    if (ghost) {
+                        wattron(win, COLOR_PAIR(color) | A_BOLD);
+                        mvwaddch(win, by + 1, draw_x, '.');
+                        mvwaddch(win, by + 1, draw_x + 1, '.');
+                        wattroff(win, COLOR_PAIR(color) | A_BOLD);
+                    } else {
+                        wattron(win, COLOR_PAIR(color));
+                        mvwaddch(win, by + 1, draw_x, ' ');
+                        mvwaddch(win, by + 1, draw_x + 1, ' ');
+                        wattroff(win, COLOR_PAIR(color));
+                    }
                 }
             }
         }
@@ -72,7 +77,7 @@ void UI::renderPieceBox(WINDOW* win, const Tetromino& tetromino, int cell_width)
         auto shape = tetromino.getShape();
         int shapeH = shape.size();
         int shapeW = shape[0].size();
-        int offsetY = (box_height - shapeH) / 2 + 1;
+        int offsetY = (box_height - 3) / 2 + 1; // 3 is default shape size
         int offsetX = (box_width - shapeW * cell_width) / 2;
         int color = tetromino.getColor();
         wattron(win, COLOR_PAIR(color));
@@ -92,7 +97,7 @@ void UI::renderStatsWindow(WINDOW* win, const std::unordered_map<std::string, in
     box(win, 0, 0);
     mvwprintw(win, 0, 2, "STATS");
     double pps = (seconds > 0) ? (statistics.at("totalPieces") / seconds) : 0.0;
-    double sps = (seconds > 0) ? (statistics.at("score") / seconds) : 0.0;
+    double apm = (seconds > 0) ? (statistics.at("attack") * 60.0 / seconds) : 0.0;
 
     int width;
     getmaxyx(win, std::ignore, width);
@@ -105,22 +110,16 @@ void UI::renderStatsWindow(WINDOW* win, const std::unordered_map<std::string, in
         mvwprintw(win, row, width - val_len - 1, "%s", valbuf);
     };
 
-    int row = 2;
+    int row = 1;
     print_stat(row++, "Lines:", "%d", statistics.at("lines"));
-    print_stat(row++, "Singles:", "%d", statistics.at("single"));
-    print_stat(row++, "Doubles:", "%d", statistics.at("double"));
-    print_stat(row++, "Triples:", "%d", statistics.at("triple"));
+    print_stat(row++, "Attack:", "%d", statistics.at("attack"));
+    print_stat(row++, "Single:", "%d", statistics.at("single"));
+    print_stat(row++, "Double:", "%d", statistics.at("double"));
+    print_stat(row++, "Triple:", "%d", statistics.at("triple"));
     print_stat(row++, "Tetris:", "%d", statistics.at("tetris"));
-    print_stat(row++, "T-Spins:", "%d", statistics.at("tspins"));
-    print_stat(row++, "Minis:", "%d", statistics.at("tspin_minis"));
-    print_stat(row++, "PC:", "%d", statistics.at("pc"));
-    print_stat(row++, "B2B:", "%d", statistics.at("b2bStreak"));
-    print_stat(row++, "+B2B:", "%d", statistics.at("max_b2bStreak"));
-    print_stat(row++, "Combo:", "%d", statistics.at("combo"));
-    print_stat(row++, "+Combo:", "%d", statistics.at("max_combo"));
-    print_stat(row++, "Pieces:", "%d", statistics.at("totalPieces"));
+    print_stat(row++, "T-Spin:", "%d", statistics.at("tspins") + statistics.at("tspin_minis"));
     print_stat(row++, "PPS:", "%.2f", pps);
-    print_stat(row++, "SPS:", "%.2f", sps);
+    print_stat(row++, "APM:", "%.2f", apm);
     print_stat(row++, "Time:", "%.1f", seconds);
 }
 

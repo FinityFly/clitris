@@ -29,7 +29,7 @@ public:
     static int countFilledCorners(const Tetromino& piece, const std::vector<std::vector<int>>& board);
 
     static ClearInfo checkClearConditions(const Tetromino& piece, std::vector<std::vector<int>>& board, int lastRotation);
-    static int calculateScore(const ClearInfo& info, int b2bStreak, int combo);
+    static int calculateAttack(const ClearInfo& info, int b2bStreak, int combo);
 };
 
 #endif

@@ -29,7 +29,7 @@ void Game::reset() {
     lastRotation = 0;
     statistics = {
         {"totalPieces", 0},
-        {"score", 0},
+        {"attack", 0},
         {"lines", 0},
         {"single", 0},
         {"double", 0},
@@ -292,9 +292,9 @@ void Game::handleInput(const Settings& settings, int ch) {
 
 void Game::processLineClear() {
     auto clearInfo = GameUtils::checkClearConditions(currentPiece, board, lastRotation);
-    int score = GameUtils::calculateScore(clearInfo, statistics["b2bStreak"], statistics["combo"]);
+    int attack = GameUtils::calculateAttack(clearInfo, statistics["b2bStreak"], statistics["combo"]);
 
-    statistics["score"] += score;
+    statistics["attack"] += attack;
     statistics["lines"] += clearInfo.lines;
     if (clearInfo.lines > 0) {
         statistics["combo"] = std::max(0, statistics["combo"]) + 1;
@@ -405,7 +405,7 @@ void Game::render() {
     int term_rows, term_cols;
     getmaxyx(stdscr, term_rows, term_cols);
     int board_width = 10;
-    int board_height = 40;
+    int board_height = 20;
     int cell_width = 2;
     int win_height = board_height + 2;
     int win_width = board_width * cell_width + 2; 
@@ -420,15 +420,15 @@ void Game::render() {
     // board window
     WINDOW* boardwin = newwin(win_height, win_width, start_y, start_x);
     box(boardwin, 0, 0);
-    UI::renderBoard(boardwin, board, cell_width);
+    UI::renderBoard(boardwin, board, board_height, board_width, cell_width);
     UI::renderGhostPiece(boardwin, currentPiece, board, cell_width);
     UI::renderTetromino(boardwin, currentPiece, cell_width, false);
     wrefresh(boardwin);
 
-    std::string scoreStr = "Score: " + std::to_string(statistics["score"]);
-    int score_x = start_x + (win_width - scoreStr.size()) / 2;
-    int score_y = start_y + board_height + 2;
-    mvprintw(score_y, score_x, "%s", scoreStr.c_str());
+    std::string linesSent = "Lines Sent: " + std::to_string(statistics["attack"]);
+    int attack_x = start_x + (win_width - linesSent.size()) / 2;
+    int attack_y = start_y + board_height + 3;
+    mvprintw(attack_y, attack_x, "%s", linesSent.c_str());
 
     // hold window
     int hold_x = start_x - box_width - 2;
@@ -440,10 +440,10 @@ void Game::render() {
     wrefresh(holdwin);
 
     // stats window
-    int stats_height = 20;
-    int stats_width = box_width + 2;
+    int stats_height = 12;
+    int stats_width = box_width;
     int stats_y = hold_y + box_height + 1;
-    int stats_x = hold_x - 2;
+    int stats_x = hold_x;
     WINDOW* statswin = newwin(stats_height, stats_width, stats_y, stats_x);
 
     double seconds = std::chrono::duration<double>(now - gameStart).count();
@@ -451,15 +451,16 @@ void Game::render() {
     wrefresh(statswin);
 
     // next window
+    int piece_gap = -2;
     int next_x = start_x + win_width + 2;
     int next_y = start_y;
-    int next_box_height = box_height * 4 + 2;
+    int next_box_height = (box_height + piece_gap) * 4 + 2;
     int next_box_width = box_width;
     WINDOW* nextwin = newwin(next_box_height, next_box_width, next_y, next_x);
     box(nextwin, 0, 0);
     mvwprintw(nextwin, 0, 2, "NEXT");
     for (int i = 0; i < 4 && i < (int)bag.size(); ++i) {
-        int piece_offset_y = 1 + i * box_height;
+        int piece_offset_y = 1 + i * (box_height + piece_gap);
         WINDOW* temp = derwin(nextwin, box_height - 2, box_width - 2, piece_offset_y, 1);
         UI::renderPieceBox(temp, bag[i], cell_width);
         delwin(temp);
@@ -486,8 +487,8 @@ void Game::render() {
     lines.emplace_back(popupText.substr(prev));
     for (const auto& l : lines) maxLen = std::max(maxLen, l.size());
 
-    int popup_y = stats_y + stats_height + 2;
-    int popup_x = start_x - (int)maxLen - 1;
+    int popup_y = stats_y + stats_height + 1;
+    int popup_x = start_x - (int)maxLen - 2;
     if (!popupText.empty() && std::chrono::duration<double>(now - popupStartTime).count() < popupDurationSeconds) {
         for (size_t i = 0; i < lines.size(); ++i) {
             int line_x = popup_x + (int)(maxLen - lines[i].size());

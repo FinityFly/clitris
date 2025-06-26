@@ -26,11 +26,11 @@ bool GameUtils::canPlace(const Tetromino& piece, const std::vector<std::vector<i
     int shapeW = shape.empty() ? 0 : shape[0].size();
     for (int y = 0; y < shapeH; ++y) {
         for (int x = 0; x < shapeW; ++x) {
-            if (shape[y][x] != 0) {
+            if (shape[y][x]) {
                 int bx = px + x;
                 int by = py + y;
-                if (bx < 0 || bx >= 10 || by < 0 || by >= 40 || board[by][bx])
-                    return false;
+                if (bx < 0 || bx >= 10 || by < 0 || by >= 40) return false;
+                if (board[by][bx] != 0) return false;
             }
         }
     }
@@ -41,14 +41,13 @@ void GameUtils::placePiece(const Tetromino& piece, std::vector<std::vector<int>>
     auto shape = piece.getShape();
     int px = piece.getX();
     int py = piece.getY();
-
     for (int y = 0; y < (int)shape.size(); ++y) {
         for (int x = 0; x < (int)shape[y].size(); ++x) {
             if (shape[y][x]) {
                 int bx = px + x;
                 int by = py + y;
-                if (bx >= 0 && bx < 10 && by >= 0 && by < 40)
-                    board[by][bx] = piece.getColor();
+                if (bx < 0 || bx >= 10 || by < 0 || by >= 40) continue;
+                board[by][bx] = piece.getColor();
             }
         }
     }
@@ -120,33 +119,41 @@ GameUtils::ClearInfo GameUtils::checkClearConditions(const Tetromino& piece, std
     return info;
 }
 
-int GameUtils::calculateScore(const ClearInfo& info, int b2bStreak, int combo) {
-    int points = 0;
-    // revise to accurately reflect tetrio
-    if (info.tspin) {
-        points = info.lines == 1 ? 800 :
-                 info.lines == 2 ? 1200 :
-                 info.lines == 3 ? 1600 : 400;
-    } else if (info.mini) {
-        points = info.lines == 1 ? 200 : 100;
-    } else {
-        points = info.lines == 1 ? 100 :
-                 info.lines == 2 ? 300 :
-                 info.lines == 3 ? 500 :
-                 info.lines == 4 ? 800 : 0;
-    }
+int GameUtils::calculateAttack(const ClearInfo& info, int b2bStreak, int combo) {
+    // tetrio combo table (0-indexed)
+    static const int comboTable[] = {
+        0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+    };
+    int linesSent = 0;
+    bool b2b = (b2bStreak > 0) && (info.lines == 4 || (info.tspin && info.lines > 0) || info.mini);
+    int comboIdx = std::min(combo, (int)(sizeof(comboTable)/sizeof(comboTable[0])) - 1);
     
-    if (b2bStreak > 0 && (info.lines == 4 || (info.tspin && info.lines > 0) || info.mini || info.pc)) {
-        points = static_cast<int>(points * (1.0 + 0.5 * std::sqrt(b2bStreak)));
+    if (info.tspin) {
+        if (info.lines == 1) linesSent = 2; // TSS
+        else if (info.lines == 2) linesSent = 4; // TSD
+        else if (info.lines == 3) linesSent = 6; // TST
+    } else if (info.mini) {
+        if (info.lines == 1) linesSent = 0; // TSM Single
+        else if (info.lines == 2) linesSent = 2; // TSM Double
+    } else {
+        // Normal clears
+        if (info.lines == 1) linesSent = 0;
+        else if (info.lines == 2) linesSent = 1;
+        else if (info.lines == 3) linesSent = 2;
+        else if (info.lines == 4) linesSent = 4;
     }
-    if (combo > 0) {
-        points += static_cast<int>(50 * std::pow(combo, 1.5));
+
+    if (b2b) {
+        if (info.lines == 4) linesSent += 1; // B2B Tetris
+        else if (info.tspin && info.lines > 0) linesSent += 1; // B2B TS
+        else if (info.mini && info.lines == 2) linesSent += 1; // B2B TSM Double
+    }
+    if (combo > 0 && info.lines > 0) {
+        linesSent += comboTable[comboIdx];
     }
     if (info.pc) {
-        points += info.lines == 1 ? 1000 :
-                  info.lines == 2 ? 3000 :
-                  info.lines == 3 ? 5000 :
-                  info.lines == 4 ? 8000 : 0;
+        linesSent += 10;
     }
-    return points;
+
+    return linesSent;
 }
