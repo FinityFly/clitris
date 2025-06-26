@@ -154,6 +154,6 @@ int GameUtils::calculateAttack(const ClearInfo& info, int b2bStreak, int combo) 
     if (info.pc) {
         linesSent += 10;
     }
-
+    
     return linesSent;
 }
