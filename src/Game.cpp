@@ -66,12 +66,11 @@ Game::Game()
     : isRunning(false),
       board(40, std::vector<int>(10, 0)),
       fallDelay(500),
-      gameStart(std::chrono::steady_clock::now()) {
-    reset();
-}
+      gameStart(std::chrono::steady_clock::now()) {}
 
 void Game::init() {
     isRunning = true;
+    reset();
     erase();
     refresh();
 }

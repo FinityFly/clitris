@@ -27,80 +27,203 @@ std::unordered_map<std::string, std::vector<int>> Settings::keyBindings = {
 };
 
 void Settings::configure() {
-    erase();
+    clear();
     refresh();
-
-    echo();
-    mvprintw(0, 0, "Configure settings (press 'q' or ESC to quit):");
-
-    std::atomic<int> lastInput{-1};
+    noecho();
+    
+    int term_rows, term_cols;
+    getmaxyx(stdscr, term_rows, term_cols);
+    
+    std::vector<std::string> settingNames = {
+        "LEFT", "RIGHT", "ROTATE_CW", "ROTATE_CCW", "FLIP", 
+        "HOLD", "SOFT_DROP", "HARD_DROP", "QUIT", "RESTART",
+        "ARR", "DAS", "DCD", "SDF"
+    };
+    
+    std::vector<std::pair<std::string, float*>> handlingSettings = {
+        {"ARR (Auto Repeat Rate)", &ARR},
+        {"DAS (Delayed Auto Shift)", &DAS},
+        {"DCD (DAS Cut Delay)", &DCD},
+        {"SDF (Soft Drop Factor)", &SDF}
+    };
+    
+    int currentSelection = 0;
     bool running = true;
-
-    // Input thread
-    std::thread inputThread([&lastInput, &running]() {
-        while (running) {
-            int ch = getch();
-            if (ch != ERR) {
-                lastInput = ch;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-    });
-
-    auto check_quit = [](int ch, const std::unordered_map<std::string, std::vector<int>>& keyBindings) {
-        auto it = keyBindings.find("QUIT");
-        if (it != keyBindings.end()) {
-            for (int key : it->second) {
-                if (ch == key) return true;
-            }
-        }
-        return false;
+    bool insertMode = false;
+    std::string insertBuffer;
+    std::vector<int> newKeys;
+    
+    auto check_quit = [](int ch) {
+        return ch == 113 || ch == 27; // q or ESC
     };
-
-    std::pair<std::string, float*> prompts[] = {
-        {"Enter ARR (0.1-99.0)", &ARR},
-        {"Enter DAS (0.1-99.0)", &DAS},
-        {"Enter DCD (0.1-99.0)", &DCD},
-        {"Enter SDF (0.1-99.0)", &SDF}
-    };
-
-    int prompt_idx = 0;
-    char input[8] = {0};
-    while (running && prompt_idx < 4) {
-        mvprintw(prompt_idx + 2, 0, "%s [%.1f]: ", prompts[prompt_idx].first.c_str(), *(prompts[prompt_idx].second));
+    
+    WINDOW* settingswin = nullptr;
+    
+    auto displaySettings = [&]() {
+        std::vector<std::string> lines;
+        lines.push_back("Settings Configuration");
+        lines.push_back("UP/DOWN: navigate, LEFT/RIGHT: adjust (+/-5)");
+        lines.push_back("ENTER: edit, ESC/Q: quit" + std::string(insertMode ? " insert mode" : ""));
+        lines.push_back("");
+        lines.push_back("=== Key Bindings ===");
+        
+        for (int i = 0; i < 10; i++) {
+            std::string name = settingNames[i];
+            std::string prefix = (currentSelection == i) ? "> " : "  ";
+            std::string keyStr = "";
+            
+            if (insertMode && currentSelection == i) {
+                keyStr = "Press key(s)... [" + insertBuffer + "]";
+            } else {
+                auto it = keyBindings.find(name);
+                if (it != keyBindings.end()) {
+                    for (size_t j = 0; j < it->second.size(); j++) {
+                        if (j > 0) keyStr += ", ";
+                        int key = it->second[j];
+                        if (key == 32) keyStr += "SPACE";
+                        else if (key == 27) keyStr += "ESC";
+                        else if (key == 260) keyStr += "LEFT";
+                        else if (key == 261) keyStr += "RIGHT";
+                        else if (key == 258) keyStr += "DOWN";
+                        else if (key == 259) keyStr += "UP";
+                        else if (key >= 32 && key <= 126) keyStr += (char)key;
+                        else keyStr += std::to_string(key);
+                    }
+                }
+            }
+            lines.push_back(prefix + name + ": " + keyStr);
+        }
+        
+        lines.push_back("");
+        lines.push_back("=== Handling Settings ===");
+        for (int i = 0; i < 4; i++) {
+            int settingIndex = i + 10;
+            std::string prefix = (currentSelection == settingIndex) ? "> " : "  ";
+            std::string valueStr;
+            
+            if (insertMode && currentSelection == settingIndex) {
+                valueStr = "Enter value: [" + insertBuffer + "]";
+            } else {
+                valueStr = std::to_string(*(handlingSettings[i].second));
+                // remove trailing zeros
+                valueStr.erase(valueStr.find_last_not_of('0') + 1, std::string::npos);
+                valueStr.erase(valueStr.find_last_not_of('.') + 1, std::string::npos);
+            }
+            lines.push_back(prefix + handlingSettings[i].first + ": " + valueStr);
+        }
+        
+        int max_width = 0;
+        for (const auto& line : lines) {
+            max_width = std::max(max_width, (int)line.size());
+        }
+        int box_width = max_width + 4;
+        int box_height = (int)lines.size() + 2;
+        
+        int term_rows, term_cols;
+        getmaxyx(stdscr, term_rows, term_cols);
+        int starty = (term_rows - box_height) / 2;
+        int startx = (term_cols - box_width) / 2;
+        
+        clear();
         refresh();
-        int ch = lastInput.exchange(-1);
-        if (ch != -1) {
-            if (check_quit(ch, keyBindings)) { noecho(); running = false; break; }
-            if (ch == '\n' || ch == KEY_ENTER) {
-                sscanf(input, "%f", prompts[prompt_idx].second);
-                ++prompt_idx;
-                memset(input, 0, sizeof(input));
-            } else if (ch == KEY_BACKSPACE || ch == 127) {
-                int len = strlen(input);
-                if (len > 0) input[len-1] = 0;
-            } else if (ch >= 32 && ch <= 126 && strlen(input) < 7) {
-                int len = strlen(input);
-                input[len] = ch;
-                input[len+1] = 0;
-            }
-            mvprintw(prompt_idx + 2, 0, "%s [%.1f]: %s ", prompts[prompt_idx].first.c_str(), *(prompts[prompt_idx].second), input);
-            refresh();
+        
+        if (settingswin) {
+            delwin(settingswin);
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        settingswin = newwin(box_height, box_width, starty, startx);
+        
+        box(settingswin, 0, 0);
+        
+        for (size_t i = 0; i < lines.size(); i++) {
+            mvwprintw(settingswin, (int)i + 1, 2, "%s", lines[i].c_str());
+        }
+        
+        wrefresh(settingswin);
+        refresh();
+    };
+    
+    while (running) {
+        displaySettings();
+        
+        int ch = getch();
+        if (insertMode) {
+            if (check_quit(ch)) {
+                insertMode = false;
+                insertBuffer.clear();
+                newKeys.clear();
+            } else if (ch == '\n' || ch == KEY_ENTER) {
+                if (currentSelection < 10) {
+                    // keybind settings
+                    if (!newKeys.empty()) {
+                        keyBindings[settingNames[currentSelection]] = newKeys;
+                    }
+                } else {
+                    // handling settings
+                    if (!insertBuffer.empty()) {
+                        float value = std::stof(insertBuffer);
+                        if (value >= 0.1f && value <= 99.0f) {
+                            *(handlingSettings[currentSelection - 10].second) = value;
+                        }
+                    }
+                }
+                insertMode = false;
+                insertBuffer.clear();
+                newKeys.clear();
+            } else if (ch == KEY_BACKSPACE || ch == 127) {
+                if (!insertBuffer.empty()) {
+                    insertBuffer.pop_back();
+                }
+                if (!newKeys.empty()) {
+                    newKeys.pop_back();
+                }
+            } else if (currentSelection < 10) {
+                // keybind settings
+                newKeys.push_back(ch);
+                if (ch == 32) insertBuffer += "SPACE ";
+                else if (ch == 27) insertBuffer += "ESC ";
+                else if (ch == 260) insertBuffer += "LEFT ";
+                else if (ch == 261) insertBuffer += "RIGHT ";
+                else if (ch == 258) insertBuffer += "DOWN ";
+                else if (ch == 259) insertBuffer += "UP ";
+                else if (ch >= 32 && ch <= 126) insertBuffer += (char)ch;
+                else insertBuffer += std::to_string(ch) + " ";
+            } else {
+                // handling settings
+                if ((ch >= '0' && ch <= '9') || ch == '.') {
+                    insertBuffer += (char)ch;
+                }
+            }
+        } else {
+            if (check_quit(ch)) {
+                running = false;
+            } else if (ch == KEY_UP) {
+                currentSelection = (currentSelection - 1 + settingNames.size()) % settingNames.size();
+            } else if (ch == KEY_DOWN) {
+                currentSelection = (currentSelection + 1) % settingNames.size();
+            } else if (ch == KEY_LEFT && currentSelection >= 10) {
+                // decrease handling by 10
+                int handlingIndex = currentSelection - 10;
+                float* setting = handlingSettings[handlingIndex].second;
+                *setting = std::max(0.1f, *setting - 5.0f);
+            } else if (ch == KEY_RIGHT && currentSelection >= 10) {
+                // increase handling by 10
+                int handlingIndex = currentSelection - 10;
+                float* setting = handlingSettings[handlingIndex].second;
+                *setting = std::min(99.0f, *setting + 5.0f);
+            } else if (ch == '\n' || ch == KEY_ENTER) {
+                insertMode = true;
+                insertBuffer.clear();
+                newKeys.clear();
+            }
+        }
+    }
+    
+    if (settingswin) {
+        delwin(settingswin);
     }
 
-    mvprintw(7, 0, "Settings configured:");
-    mvprintw(8, 0, "ARR: %.2f", ARR);
-    mvprintw(9, 0, "DAS: %.2f", DAS);
-    mvprintw(10, 0, "DCD: %.2f", DCD);
-    mvprintw(11, 0, "SDF: %.2f", SDF);
-    noecho();
+    clear();
     refresh();
-    running = false;
-    inputThread.join();
-    int ch = getch();
-    if (check_quit(ch, keyBindings)) return;
 }
 
 std::unordered_map<std::string, std::vector<int>> Settings::getKeyBindings() {
