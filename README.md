@@ -18,16 +18,16 @@
 ---
 
 <table width="100%">
-<tr>
-<td width="50%" align="center">
-<img src="assets/thumbnail.png" height="500" alt="clitris gameplay screenshot">
-<br><strong>🎮 Gameplay</strong>
-</td>
-<td width="50%" align="center">
-<img src="assets/settings.png" height="500" alt="clitris settings interface">
-<br><strong>⚙️ Settings</strong>
-</td>
-</tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="assets/thumbnail.png" height="500" alt="clitris gameplay screenshot">
+      <br><strong>🎮 Gameplay</strong>
+    </td>
+    <td width="50%" align="center">
+      <img src="assets/settings.png" height="500" alt="clitris settings interface">
+      <br><strong>⚙️ Settings</strong>
+    </td>
+  </tr>
 </table>
 
 </div>

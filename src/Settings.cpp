@@ -119,8 +119,6 @@ void Settings::configure() {
         int box_width = max_width + 4;
         int box_height = (int)lines.size() + 2;
         
-        int term_rows, term_cols;
-        getmaxyx(stdscr, term_rows, term_cols);
         int starty = (term_rows - box_height) / 2;
         int startx = (term_cols - box_width) / 2;
         
