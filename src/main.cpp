@@ -46,21 +46,84 @@ int main() {
         clear();
         refresh();
         
-        menu.display();
+        menu.display(0); // main menu
         int choice = menu.getChoice();
 
         clear();
         refresh();
 
         switch (choice) {
-            case 1: // start game
+            case 1: // sprint mode
+                menu.display(1); // sprint mode sub-menu
+                choice = menu.getChoice();
+
+                clear();
+                refresh();
+
+                switch(choice) {
+                    case 1: // 20L
+                        settings.setMode("sprint_20l");
+                        game.init();
+                        game.run(settings);
+                        break;
+                    case 2: // 40L
+                        settings.setMode("sprint_40l");
+                        game.init();
+                        game.run(settings);
+                        break;
+                    case 3: // 100L
+                        settings.setMode("sprint_100l");
+                        game.init();
+                        game.run(settings);
+                        break;
+                    case -1: // back to main menu
+                        continue;
+                    default:
+                        mvprintw(0, 0, "Invalid choice of %d. Please try again.\n", choice);
+                        refresh();
+                        getch();
+                }
+                break;
+            case 2: // blitz mode
+                menu.display(2); // blitz mode sub-menu
+                choice = menu.getChoice();
+
+                clear();
+                refresh();
+
+                switch(choice) {
+                    case 1: // 1:00
+                        settings.setMode("blitz_1min");
+                        game.init();
+                        game.run(settings);
+                        break;
+                    case 2: // 2:00
+                        settings.setMode("blitz_2min");
+                        game.init();
+                        game.run(settings);
+                        break;
+                    case 3: // 4:00
+                        settings.setMode("blitz_4min");
+                        game.init();
+                        game.run(settings);
+                        break;
+                    case -1: // back to main menu
+                        continue;
+                    default:
+                        mvprintw(0, 0, "Invalid choice of %d. Please try again.\n", choice);
+                        refresh();
+                        getch();
+                }
+                break;
+            case 3: // zen mode
+                settings.setMode("zen");
                 game.init();
                 game.run(settings);
                 break;
-            case 2: // keybinds and handling
+            case 4: // keybinds and handling
                 settings.configure();
                 break;
-            case 3: // exit
+            case -1: // exit
                 running = false;
                 break;
             default:
