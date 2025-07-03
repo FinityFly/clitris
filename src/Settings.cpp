@@ -13,6 +13,8 @@ float Settings::DAS = 50.0f; // delayed auto shift (ms)
 float Settings::DCD = 33.0f; // das cut delay (ms)
 float Settings::SDF = 1.0f; // soft drop factor (ms)
 
+std::string Settings::mode = "zen";
+
 std::unordered_map<std::string, std::vector<int>> Settings::keyBindings = {
     {"LEFT",    {260, 106}},         // left arrow key, j key
     {"RIGHT",   {261, 108}},         // right arrow key, l key

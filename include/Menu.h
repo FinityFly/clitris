@@ -3,7 +3,7 @@
 
 class Menu {
 public:
-    void display();
+    void display(int state = 0);
     int getChoice();
 private:
     int choice = -1;

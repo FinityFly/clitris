@@ -76,17 +76,17 @@ void Game::init() {
 }
 
 void Game::run(const Settings& settings) {
-    isRunning = true;
     nodelay(stdscr, TRUE);
-    leftHeld = false;
-    rightHeld = false;
-    softDropHeld = false;
-    lastDirection = 0;
 
     float arr = settings.getARR(); // auto repeat rate (ms)
     float das = settings.getDAS(); // delayed auto shift (ms)
     float dcd = settings.getDCD(); // das cut delay (ms)
     float sdf = settings.getSDF(); // soft drop factor (ms)
+
+    leftHeld = false;
+    rightHeld = false;
+    softDropHeld = false;
+    lastDirection = 0;
 
     auto lastLeft = std::chrono::steady_clock::now();
     auto lastRight = std::chrono::steady_clock::now();
@@ -293,9 +293,9 @@ void Game::processLineClear() {
     auto clearInfo = GameUtils::checkClearConditions(currentPiece, board, lastRotation);
     int attack = GameUtils::calculateAttack(clearInfo, statistics["b2bStreak"], statistics["combo"]);
 
-    statistics["attack"] += attack;
-    statistics["lines"] += clearInfo.lines;
     if (clearInfo.lines > 0) {
+        statistics["attack"] += attack;
+        statistics["lines"] += clearInfo.lines;
         statistics["combo"] = std::max(0, statistics["combo"]) + 1;
         if (clearInfo.pc) {
             statistics["pc"]++;
@@ -320,11 +320,25 @@ void Game::processLineClear() {
             statistics["b2bStreak"] = 0;
         }
         statistics["max_combo"] = std::max(statistics["max_combo"], statistics["combo"]);
+
+        generatePopup(clearInfo);
+        
+        std::string currentMode = Settings::getMode();
+        if (currentMode.find("sprint_") == 0) {
+            if (currentMode == "sprint_20l" && statistics["lines"] >= 20) {
+                isRunning = false;
+                return;
+            } else if (currentMode == "sprint_40l" && statistics["lines"] >= 40) {
+                isRunning = false;
+                return;
+            } else if (currentMode == "sprint_100l" && statistics["lines"] >= 100) {
+                isRunning = false;
+                return;
+            }
+        }
     } else {
         statistics["combo"] = 0;
     }
-
-    generatePopup(clearInfo);
 
     holdAvailable = true;
     lastFallTime = std::chrono::steady_clock::now();
@@ -371,6 +385,26 @@ void Game::generatePopup(const GameUtils::ClearInfo& info) {
 
 void Game::update() {
     auto now = std::chrono::steady_clock::now();
+    
+    // Check for blitz mode time limit
+    std::string currentMode = Settings::getMode();
+    if (currentMode.find("blitz_") == 0) {
+        double gameTimeSeconds = std::chrono::duration<double>(now - gameStart).count();
+        double timeLimit = 0.0;
+        
+        if (currentMode == "blitz_1min") {
+            timeLimit = 60.0;
+        } else if (currentMode == "blitz_2min") {
+            timeLimit = 120.0;
+        } else if (currentMode == "blitz_4min") {
+            timeLimit = 240.0;
+        }
+        
+        if (timeLimit > 0.0 && gameTimeSeconds >= timeLimit) {
+            isRunning = false;
+            return;
+        }
+    }
 
     Tetromino moved = currentPiece;
     moved.setY(currentPiece.getY() + 1);
