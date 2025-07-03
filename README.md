@@ -2,7 +2,7 @@
 
 # 🎮 clitris
 
-**A modern, guideline-compliant Tetris implementation for the command line**
+**A minimalistic, high-fidelity, guideline Tetris implementation for the command line**
 
 [![GitHub release](https://img.shields.io/github/v/release/FinityFly/clitris?style=for-the-badge)](https://github.com/FinityFly/clitris/releases)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/FinityFly/clitris/release.yaml?style=for-the-badge)](https://github.com/FinityFly/clitris/actions)
