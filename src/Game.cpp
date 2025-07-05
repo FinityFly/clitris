@@ -254,7 +254,7 @@ void Game::handleInput(const Settings& settings, int ch) {
                     if (holdAvailable) {
                         currentPiece.setRotationState(0);
                         currentPiece.setX(3);
-                        currentPiece.setY(0);
+                        currentPiece.setY(20);
                         if (holdPiece.getType() != 0) {
                             std::swap(currentPiece, holdPiece);
                         } else {
