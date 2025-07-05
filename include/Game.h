@@ -26,6 +26,7 @@ public:
     void placePiece(const Tetromino& piece);
 private:
     bool isRunning;
+    bool quitPressed = false;
     std::atomic<int> lastInput{-1};
     std::vector<std::vector<int>> board;
     std::vector<Tetromino> bag;
@@ -42,13 +43,18 @@ private:
         {"triple", 0},
         {"tetris", 0},
         {"tspins", 0},
+        {"tss", 0},
+        {"tsd", 0},
+        {"tst", 0},
         {"tspin_minis", 0},
         {"pc", 0},
         {"b2bStreak", 0},
         {"max_b2bStreak", 0},
         {"combo", 0},
         {"max_combo", 0},
+        {"score", 0}
     };
+    double gameTime;
 
     int fallDelay; // ms
     std::chrono::steady_clock::time_point lastFallTime;
