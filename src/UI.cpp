@@ -178,7 +178,9 @@ void UI::showResultsPage(const std::string& mode, const std::unordered_map<std::
     std::string title, modeStat;
     if (mode.find("sprint_") != std::string::npos) {
         title = "SPRINT RESULTS";
-        modeStat = "Time: " + std::to_string(gameTime) + " s";
+        char timebuf[16];
+        snprintf(timebuf, sizeof(timebuf), "%.3f s", gameTime);
+        modeStat = std::string("Time: ") + timebuf;
         statLines.insert(statLines.begin(), {"Score", std::to_string(statistics.at("score"))});
     } else if (mode.find("blitz_") != std::string::npos) {
         title = "BLITZ RESULTS";
@@ -187,8 +189,6 @@ void UI::showResultsPage(const std::string& mode, const std::unordered_map<std::
     } else if (mode == "zen") {
         title = "ZEN RESULTS";
         modeStat = "Lines: " + std::to_string(statistics.at("lines"));
-    } else {
-        title = mode;
     }
 
     while (true) {

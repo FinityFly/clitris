@@ -125,7 +125,7 @@ void Menu::display(int state) {
         mvwprintw(menuwin, box_height - 4, error_x, "%s", error_msg.c_str());
         wattroff(menuwin, COLOR_PAIR(7) | A_BOLD);
         wrefresh(menuwin);
-        std::this_thread::sleep_for(std::chrono::milliseconds(800));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
         for (int i = 0; i < (int)error_msg.size(); i++) {
             mvwprintw(menuwin, box_height - 4, error_x + i, " ");
         }
