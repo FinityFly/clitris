@@ -24,6 +24,7 @@ std::unordered_map<std::string, std::vector<int>> Settings::keyBindings = {
     {"HOLD",    {259, 105}},         // up arrow, i key
     {"SOFT_DROP", {258, 107}},       // down arrow, k key
     {"HARD_DROP", {32}},             // space key
+    {"PAUSE",   {112}},              // p key
     {"QUIT",    {113, 27}},          // q key, esc
     {"RESTART", {114, 92}}           // r key, '\'
 };

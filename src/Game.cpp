@@ -49,6 +49,7 @@ void Game::reset() {
     };
     lastFallTime = std::chrono::steady_clock::now();
     gameStart = std::chrono::steady_clock::now();
+    totalPausedDuration = 0.0;
 }
 
 void Game::newPiece() {
@@ -100,6 +101,27 @@ void Game::run(const Settings& settings) {
     bool leftDCD = false, rightDCD = false;
     std::unordered_set<int> heldKeys;
     while (isRunning) {
+        if (isPaused) {
+            auto pauseStartTime = std::chrono::steady_clock::now();
+            UI::showPauseScreen();
+            int pause_ch;
+            while (isPaused) {
+                pause_ch = getch();
+                if (pause_ch == 'p' || pause_ch == 'P') {
+                    isPaused = false;
+                } else if (pause_ch == 'q' || pause_ch == 'Q') {
+                    quitPressed = true;
+                    isRunning = false;
+                    break;
+                }
+            }
+            auto pauseEndTime = std::chrono::steady_clock::now();
+            totalPausedDuration += std::chrono::duration<double>(pauseEndTime - pauseStartTime).count();
+            clear();
+            refresh();
+            continue;
+        }
+
         int ch;
         bool sawLeft = false, sawRight = false, sawSoftDrop = false;
         while ((ch = getch()) != ERR) {
@@ -254,7 +276,7 @@ void Game::handleInput(const Settings& settings, int ch) {
                     if (holdAvailable) {
                         currentPiece.setRotationState(0);
                         currentPiece.setX(3);
-                        currentPiece.setY(0);
+                        currentPiece.setY(20);
                         if (holdPiece.getType() != 0) {
                             std::swap(currentPiece, holdPiece);
                         } else {
@@ -271,11 +293,11 @@ void Game::handleInput(const Settings& settings, int ch) {
                         moved.setY(moved.getY() + 1);
                     }
                     GameUtils::placePiece(currentPiece, board);
-                    lastRotation = 0;
                     processLineClear();
 
                     newPiece();
 
+                    lastRotation = 0;
                     holdAvailable = true;
                     lastFallTime = std::chrono::steady_clock::now();
                     return;
@@ -285,6 +307,8 @@ void Game::handleInput(const Settings& settings, int ch) {
                     reset();
                 } else if (action == "RESTART") {
                     reset();
+                } else if (action == "PAUSE") {
+                    isPaused = !isPaused;
                 }
                 refresh();
             }
@@ -452,7 +476,7 @@ void Game::update() {
         }
     }
 
-    gameTime = std::chrono::duration<double>(now - gameStart).count();
+    gameTime = std::chrono::duration<double>(now - gameStart).count() - totalPausedDuration;
 }
 
 void Game::render() {
