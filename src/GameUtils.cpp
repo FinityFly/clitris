@@ -157,3 +157,35 @@ int GameUtils::calculateAttack(const ClearInfo& info, int b2bStreak, int combo) 
     
     return linesSent;
 }
+
+int GameUtils::calculateScore(const ClearInfo& info, int b2bStreak, int combo) {
+    int base = 0;
+    if (info.mini) {
+        if (info.lines == 1) base = 100; // T-Spin Mini Single
+        else if (info.lines == 2) base = 200; // T-Spin Mini Double
+    } else if (info.tspin) {
+        if (info.lines == 1) base = 800; // T-Spin Single
+        else if (info.lines == 2) base = 1200; // T-Spin Double
+        else if (info.lines == 3) base = 1600; // T-Spin Triple
+    } else {
+        if (info.lines == 1) base = 100; // Single
+        else if (info.lines == 2) base = 300; // Double
+        else if (info.lines == 3) base = 500; // Triple
+        else if (info.lines == 4) base = 800; // Tetris
+    }
+
+    // B2B bonus
+    bool b2b = (b2bStreak > 0) && (info.lines == 4 || info.tspin);
+    if (b2b && (info.lines == 4 || info.tspin)) {
+        base = static_cast<int>(base * 1.5);
+    }
+
+    // Combo bonus: +50 per combo, starting from 2nd combo
+    int comboBonus = (combo > 1) ? (combo - 1) * 50 : 0;
+
+    // PC
+    int pcBonus = info.pc ? 3500 : 0;
+
+    return base + comboBonus + pcBonus;
+}
+

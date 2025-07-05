@@ -36,12 +36,16 @@ void Game::reset() {
         {"triple", 0},
         {"tetris", 0},
         {"tspins", 0},
+        {"tss", 0},
+        {"tsd", 0},
+        {"tst", 0},
         {"tspin_minis", 0},
         {"pc", 0},
         {"b2bStreak", 0},
         {"max_b2bStreak", 0},
         {"combo", 0},
         {"max_combo", 0},
+        {"score", 0}
     };
     lastFallTime = std::chrono::steady_clock::now();
     gameStart = std::chrono::steady_clock::now();
@@ -70,6 +74,7 @@ Game::Game()
 
 void Game::init() {
     isRunning = true;
+    quitPressed = false;
     reset();
     erase();
     refresh();
@@ -204,6 +209,10 @@ void Game::run(const Settings& settings) {
         render();
         std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60 FPS
     }
+
+    if (!quitPressed || Settings::getMode() == "zen") {
+        UI::showResultsPage(Settings::getMode(), statistics, gameTime);
+    }
 }
 
 void Game::handleInput(const Settings& settings, int ch) {
@@ -244,6 +253,8 @@ void Game::handleInput(const Settings& settings, int ch) {
                 } else if (action == "HOLD") {
                     if (holdAvailable) {
                         currentPiece.setRotationState(0);
+                        currentPiece.setX(3);
+                        currentPiece.setY(0);
                         if (holdPiece.getType() != 0) {
                             std::swap(currentPiece, holdPiece);
                         } else {
@@ -269,6 +280,7 @@ void Game::handleInput(const Settings& settings, int ch) {
                     lastFallTime = std::chrono::steady_clock::now();
                     return;
                 } else if (action == "QUIT") {
+                    quitPressed = true;
                     isRunning = false;
                     reset();
                 } else if (action == "RESTART") {
@@ -291,10 +303,10 @@ void Game::handleInput(const Settings& settings, int ch) {
 
 void Game::processLineClear() {
     auto clearInfo = GameUtils::checkClearConditions(currentPiece, board, lastRotation);
-    int attack = GameUtils::calculateAttack(clearInfo, statistics["b2bStreak"], statistics["combo"]);
 
     if (clearInfo.lines > 0) {
-        statistics["attack"] += attack;
+        statistics["attack"] += GameUtils::calculateAttack(clearInfo, statistics["b2bStreak"], statistics["combo"]);
+        statistics["score"] += GameUtils::calculateScore(clearInfo, statistics["b2bStreak"], statistics["combo"]);
         statistics["lines"] += clearInfo.lines;
         statistics["combo"] = std::max(0, statistics["combo"]) + 1;
         if (clearInfo.pc) {
@@ -302,6 +314,13 @@ void Game::processLineClear() {
         }
         if (clearInfo.tspin) {
             statistics["tspins"]++;
+            if (clearInfo.lines == 1) {
+                statistics["tss"]++;
+            } else if (clearInfo.lines == 2) {
+                statistics["tsd"]++;
+            } else if (clearInfo.lines == 3) {
+                statistics["tst"]++;
+            }
         } else if (clearInfo.mini) {
             statistics["tspin_minis"]++;
         } else if (clearInfo.lines == 1) {
@@ -432,6 +451,8 @@ void Game::update() {
             lastFallTime = now;
         }
     }
+
+    gameTime = std::chrono::duration<double>(now - gameStart).count();
 }
 
 void Game::render() {
@@ -479,8 +500,7 @@ void Game::render() {
     int stats_x = hold_x;
     WINDOW* statswin = newwin(stats_height, stats_width, stats_y, stats_x);
 
-    double seconds = std::chrono::duration<double>(now - gameStart).count();
-    UI::renderStatsWindow(statswin, statistics, seconds);
+    UI::renderStatsWindow(statswin, statistics, gameTime);
     wrefresh(statswin);
 
     // next window
