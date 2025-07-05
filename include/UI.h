@@ -14,6 +14,7 @@ public:
     static void renderPieceBox(WINDOW* win, const Tetromino& tetromino, int cell_width = 2);
     static void renderStatsWindow(WINDOW* win, const std::unordered_map<std::string, int>& statistics, double gameTime = 0.0);
     static void renderHandling(WINDOW* win);
+    static std::string formatSeconds(double seconds);
     static void showResultsPage(const std::string& mode, const std::unordered_map<std::string, int>& statistics, double gameTime = 0.0);
     static void showPauseScreen();
 };

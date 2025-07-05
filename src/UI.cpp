@@ -134,6 +134,15 @@ void UI::renderHandling(WINDOW* win) {
     mvwprintw(win, 4, 1, "SDF: %.2f", Settings::getSDF());
 }
 
+std::string UI::formatSeconds(double seconds) {
+    int total = static_cast<int>(seconds + 0.5); // round to nearest second
+    int mins = total / 60;
+    int secs = total % 60;
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%d:%02d", mins, secs);
+    return std::string(buf);
+}
+
 void UI::showResultsPage(const std::string& mode, const std::unordered_map<std::string, int>& statistics, double gameTime) {
     clear();
     refresh();
@@ -178,17 +187,27 @@ void UI::showResultsPage(const std::string& mode, const std::unordered_map<std::
     std::string title, modeStat;
     if (mode.find("sprint_") != std::string::npos) {
         title = "SPRINT RESULTS";
-        char timebuf[16];
-        snprintf(timebuf, sizeof(timebuf), "%.3f s", gameTime);
-        modeStat = std::string("Time: ") + timebuf;
+        modeStat = std::string("Time: ") + formatSeconds(gameTime);
         statLines.insert(statLines.begin(), {"Score", std::to_string(statistics.at("score"))});
     } else if (mode.find("blitz_") != std::string::npos) {
         title = "BLITZ RESULTS";
         modeStat = "Score: " + std::to_string(statistics.at("score"));
-        statLines.insert(statLines.begin(), {"Time", std::to_string(gameTime) + " s"});
+        std::string gameTimeStr;
+        if (mode.find("1min") != std::string::npos) {
+            gameTimeStr = "1:00";
+        } else if (mode.find("2min") != std::string::npos) {
+            gameTimeStr = "2:00";
+        } else if (mode.find("4min") != std::string::npos) {
+            gameTimeStr = "4:00";
+        } else {
+            gameTimeStr = formatSeconds(gameTime);
+        }
+        statLines.insert(statLines.begin(), {"Time", gameTimeStr});
     } else if (mode == "zen") {
         title = "ZEN RESULTS";
         modeStat = "Lines: " + std::to_string(statistics.at("lines"));
+        statLines.insert(statLines.begin(), {"Score", std::to_string(statistics.at("score"))});
+        statLines.insert(statLines.begin(), {"Time", formatSeconds(gameTime)});
     }
 
     while (true) {

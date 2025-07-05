@@ -27,6 +27,7 @@ public:
 private:
     bool isRunning;
     bool quitPressed = false;
+    bool isPaused = false;
     std::atomic<int> lastInput{-1};
     std::vector<std::vector<int>> board;
     std::vector<Tetromino> bag;
@@ -55,6 +56,7 @@ private:
         {"score", 0}
     };
     double gameTime;
+    double totalPausedDuration;
 
     int fallDelay; // ms
     std::chrono::steady_clock::time_point lastFallTime;
