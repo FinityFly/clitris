@@ -15,4 +15,5 @@ public:
     static void renderStatsWindow(WINDOW* win, const std::unordered_map<std::string, int>& statistics, double gameTime = 0.0);
     static void renderHandling(WINDOW* win);
     static void showResultsPage(const std::string& mode, const std::unordered_map<std::string, int>& statistics, double gameTime = 0.0);
+    static void showPauseScreen();
 };

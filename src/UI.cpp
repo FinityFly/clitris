@@ -222,3 +222,27 @@ void UI::showResultsPage(const std::string& mode, const std::unordered_map<std::
     clear();
     refresh();
 }
+
+void UI::showPauseScreen() {
+    int term_rows, term_cols;
+    getmaxyx(stdscr, term_rows, term_cols);
+    int pause_win_height = 5;
+    int pause_win_width = 20;
+    int start_y = (term_rows - pause_win_height) / 2;
+    int start_x = (term_cols - pause_win_width) / 2;
+    WINDOW* pausewin = newwin(pause_win_height, pause_win_width, start_y, start_x);
+    box(pausewin, 0, 0);
+    wattron(pausewin, A_BOLD);
+    std::string paused = "PAUSED";
+    int paused_x = (pause_win_width - paused.size()) / 2;
+    mvwprintw(pausewin, 1, paused_x, "%s", paused.c_str());
+    wattroff(pausewin, A_BOLD);
+    std::string instr1 = "[p] to unpause";
+    std::string instr2 = "[q] to quit";
+    int instr1_x = (pause_win_width - instr1.size()) / 2;
+    int instr2_x = (pause_win_width - instr2.size()) / 2;
+    mvwprintw(pausewin, 2, instr1_x, "%s", instr1.c_str());
+    mvwprintw(pausewin, 3, instr2_x, "%s", instr2.c_str());
+    wrefresh(pausewin);
+    delwin(pausewin);
+}
