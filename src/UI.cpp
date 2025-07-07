@@ -135,11 +135,11 @@ void UI::renderHandling(WINDOW* win) {
 }
 
 std::string UI::formatSeconds(double seconds) {
-    int total = static_cast<int>(seconds + 0.5); // round to nearest second
-    int mins = total / 60;
-    int secs = total % 60;
-    char buf[16];
-    snprintf(buf, sizeof(buf), "%d:%02d", mins, secs);
+    int mins = static_cast<int>(seconds) / 60;
+    int secs = static_cast<int>(seconds) % 60;
+    int millis = static_cast<int>((seconds - static_cast<int>(seconds)) * 1000 + 0.5);
+    char buf[24];
+    snprintf(buf, sizeof(buf), "%d:%02d.%03d", mins, secs, millis);
     return std::string(buf);
 }
 
@@ -157,9 +157,10 @@ void UI::showResultsPage(const std::string& mode, const std::unordered_map<std::
         {"double", "Doubles"},
         {"triple", "Triples"},
         {"tetris", "Tetrises"},
-        {"tss", "T-Spin Single"},
-        {"tsd", "T-Spin Double"},
-        {"tst", "T-Spin Triple"},
+        {"tspins", "T-Spins"},
+        {"tss", "T-Spin Singles"},
+        {"tsd", "T-Spin Doubles"},
+        {"tst", "T-Spin Triples"},
         {"tspin_minis", "T-Spin Minis"},
         {"pc", "Perfect Clears"},
         {"max_b2bStreak", "Max B2B Streak"},
@@ -175,13 +176,22 @@ void UI::showResultsPage(const std::string& mode, const std::unordered_map<std::
     }
 
     int box_width = 48;
-    int box_height = std::min((int)statLines.size() + 8, term_rows - 2);
+    int box_height = std::min((int)statLines.size() + 12, term_rows - 2);
     int start_y = (term_rows - box_height) / 2;
     int start_x = (term_cols - box_width) / 2;
 
     WINDOW* win = newwin(box_height, box_width, start_y, start_x);
     keypad(win, TRUE);
     box(win, 0, 0);
+
+    // PPS and APM
+    double pps = (gameTime > 0) ? (statistics.at("totalPieces") / gameTime) : 0.0;
+    double apm = (gameTime > 0) ? (statistics.at("attack") * 60.0 / gameTime) : 0.0;
+    char pps_buf[16], apm_buf[16];
+    snprintf(pps_buf, sizeof(pps_buf), "%.2f", pps);
+    snprintf(apm_buf, sizeof(apm_buf), "%.2f", apm);
+    statLines.insert(statLines.begin(), {"Pieces Per Second (PPS)", std::string(pps_buf)});
+    statLines.insert(statLines.begin(), {"Attack Per Minute (APM)", std::string(apm_buf)});
 
     // mode-specific statistics
     std::string title, modeStat;
@@ -193,21 +203,24 @@ void UI::showResultsPage(const std::string& mode, const std::unordered_map<std::
         title = "BLITZ RESULTS";
         modeStat = "Score: " + std::to_string(statistics.at("score"));
         std::string gameTimeStr;
-        if (mode.find("1min") != std::string::npos) {
-            gameTimeStr = "1:00";
-        } else if (mode.find("2min") != std::string::npos) {
-            gameTimeStr = "2:00";
-        } else if (mode.find("4min") != std::string::npos) {
-            gameTimeStr = "4:00";
-        } else {
-            gameTimeStr = formatSeconds(gameTime);
-        }
+        if (mode.find("1min") != std::string::npos) gameTimeStr = "1:00.000";
+        else if (mode.find("2min") != std::string::npos) gameTimeStr = "2:00.000";
+        else if (mode.find("4min") != std::string::npos) gameTimeStr = "4:00.000";
+        else gameTimeStr = formatSeconds(gameTime);
         statLines.insert(statLines.begin(), {"Time", gameTimeStr});
     } else if (mode == "zen") {
         title = "ZEN RESULTS";
         modeStat = "Lines: " + std::to_string(statistics.at("lines"));
         statLines.insert(statLines.begin(), {"Score", std::to_string(statistics.at("score"))});
         statLines.insert(statLines.begin(), {"Time", formatSeconds(gameTime)});
+    } else if (mode.find("cheese_") != std::string::npos) {
+        title = "CHEESE RESULTS";
+        modeStat = std::string("Time: ") + formatSeconds(gameTime);
+        statLines.insert(statLines.begin(), {"Score", std::to_string(statistics.at("score"))});
+        statLines.insert(statLines.begin(), {"Cheese Cleared", std::to_string(statistics.at("cheeseCleared"))});
+    } else {
+        title = "GAME OVER";
+        modeStat = "Mode: " + mode;
     }
 
     while (true) {
@@ -222,7 +235,7 @@ void UI::showResultsPage(const std::string& mode, const std::unordered_map<std::
         }
 
         // label value pairs
-        for (int i = 0; i < statLines.size(); ++i) {
+        for (int i = 0; i < static_cast<int>(statLines.size()); ++i) {
             const auto& [label, value] = statLines[i];
             mvwprintw(win, i + 5, 4, "%s", label.c_str());
             mvwprintw(win, i + 5, box_width - 4 - (int)value.size(), "%s", value.c_str());

@@ -7,6 +7,7 @@
 #include <chrono>
 
 #include "../include/Menu.h"
+#include "../include/Settings.h"
 
 // Use std::pair<std::string, std::string> for hotkey and label
 static std::vector<std::vector<std::pair<std::string, std::string>>> menu_options = {
@@ -14,7 +15,8 @@ static std::vector<std::vector<std::pair<std::string, std::string>>> menu_option
         {"1", "🚀 Sprint"},
         {"2", "🔥 Blitz"},
         {"3", "🧘 Zen"},
-        {"4", "⚙️  Settings"},
+        {"4", "🧀 Cheese"},
+        {"5", "⚙️  Settings"},
         {"q", "←  Exit"}
     },
     {
@@ -28,13 +30,20 @@ static std::vector<std::vector<std::pair<std::string, std::string>>> menu_option
         {"2", "🔥 2:00 Blitz"},
         {"3", "🔥 4:00 Blitz"},
         {"q", "←  Back to Main Menu"}
+    },
+    {
+        {"1", "🧀 10L Cheese"},
+        {"2", "🧀 18L Cheese"},
+        {"3", "🧀 100L Cheese"},
+        {"q", "←  Back to Main Menu"}
     }
 };
 
 static std::vector<std::string> titles = {
     "🎮 CLITRIS",
     "🚀 SPRINT MODE",
-    "🔥 BLITZ MODE"
+    "🔥 BLITZ MODE",
+    "🧀 CHEESE MODE",
 };
 
 void Menu::display(int state) {

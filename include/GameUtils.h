@@ -17,6 +17,7 @@ public:
         bool tspin;
         bool mini;
         bool pc;
+        int cheeseCleared = 0;
     };
 
     static std::vector<Tetromino> generateBag();
@@ -31,6 +32,7 @@ public:
     static ClearInfo checkClearConditions(const Tetromino& piece, std::vector<std::vector<int>>& board, int lastRotation);
     static int calculateAttack(const ClearInfo& info, int b2bStreak, int combo);
     static int calculateScore(const ClearInfo& info, int b2bStreak, int combo);
+    static void generateCheeseLines(std::vector<std::vector<int>>& board, int num);
 };
 
 #endif

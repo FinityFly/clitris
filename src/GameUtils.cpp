@@ -101,21 +101,38 @@ int GameUtils::countFilledCorners(const Tetromino& piece, const std::vector<std:
 
 GameUtils::ClearInfo GameUtils::checkClearConditions(const Tetromino& piece, std::vector<std::vector<int>>& board, int lastRotation) {
     ClearInfo info{};
-    
     // tspin checks
     if (piece.getType() != 'T') {
-        info.tspin = 0;
-        info.mini = 0;
-    } else if (piece.getType() == 'T' && lastRotation > 0) {
+        info.tspin = false;
+        info.mini = false;
+    } else if (lastRotation > 0) {
         int cornersFilled = countFilledCorners(piece, board);
-        info.tspin = cornersFilled >= 3;
-        info.mini = cornersFilled == 2 && (lastRotation == 2);
+        info.tspin = (cornersFilled >= 3);
+        info.mini = (cornersFilled == 2 && lastRotation == 2);
     }
-    
-    // lines and pc checks
+
+    // identify cleared lines
+    std::vector<int> clearedLines;
+    for (int y = 0; y < static_cast<int>(board.size()); ++y) {
+        bool isFull = std::all_of(board[y].begin(), board[y].end(), [](int cell) { return cell != 0; });
+        if (isFull) {
+            clearedLines.push_back(y);
+        }
+    }
+    // count cheese among cleared lines
+    int cheeseCleared = 0;
+    for (int y : clearedLines) {
+        int cheeseBlocks = std::count(board[y].begin(), board[y].end(), 8);
+        if (cheeseBlocks == 9) {
+            ++cheeseCleared;
+        }
+    }
+    info.cheeseCleared = cheeseCleared;
+
+    // clear lines and check for perfect clear
     info.lines = clearLines(board);
-    info.pc = (info.lines > 0) && (isPerfectClear(board));
-    
+    info.pc = (info.lines > 0) && isPerfectClear(board);
+
     return info;
 }
 
@@ -189,3 +206,24 @@ int GameUtils::calculateScore(const ClearInfo& info, int b2bStreak, int combo) {
     return base + comboBonus + pcBonus;
 }
 
+void GameUtils::generateCheeseLines(std::vector<std::vector<int>>& board, int num) {
+    static thread_local std::mt19937 gen(std::random_device{}());
+    std::uniform_int_distribution<> dist(0, 9);
+
+    std::vector<std::vector<int>> cheeseRows;
+    int prevHole = -1;
+    for (int i = 0; i < num; ++i) {
+        int hole;
+        do {
+            hole = dist(gen);
+        } while (hole == prevHole); // ensure no duplicate hole positions
+        prevHole = hole;
+        std::vector<int> row(10, 8);
+        row[hole] = 0;
+        cheeseRows.push_back(row);
+    }
+    for (int i = 0; i < num; ++i) {
+        board.erase(board.begin());
+    }
+    board.insert(board.end(), cheeseRows.begin(), cheeseRows.end());
+}
