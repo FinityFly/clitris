@@ -47,9 +47,14 @@ void Game::reset() {
         {"max_combo", 0},
         {"score", 0}
     };
+    cheeseCount = 0;
+    cheeseGenerated = 9;
     lastFallTime = std::chrono::steady_clock::now();
     gameStart = std::chrono::steady_clock::now();
     totalPausedDuration = 0.0;
+    if (Settings::getMode().find("cheese_") == 0) {
+        GameUtils::generateCheeseLines(board, 9);
+    }
 }
 
 void Game::newPiece() {
@@ -63,7 +68,6 @@ void Game::newPiece() {
 
     if (!GameUtils::canPlace(currentPiece, board)) {
         isRunning = false;
-        reset();
     }
 }
 
@@ -101,15 +105,18 @@ void Game::run(const Settings& settings) {
     bool leftDCD = false, rightDCD = false;
     std::unordered_set<int> heldKeys;
     while (isRunning) {
+        const auto& keyBindings = settings.getKeyBindings();
         if (isPaused) {
             auto pauseStartTime = std::chrono::steady_clock::now();
             UI::showPauseScreen();
             int pause_ch;
             while (isPaused) {
                 pause_ch = getch();
-                if (pause_ch == 'p' || pause_ch == 'P') {
+                const auto& pauseKeys = keyBindings.at("PAUSE");
+                const auto& quitKeys = keyBindings.at("QUIT");
+                if (std::find(pauseKeys.begin(), pauseKeys.end(), pause_ch) != pauseKeys.end()) {
                     isPaused = false;
-                } else if (pause_ch == 'q' || pause_ch == 'Q') {
+                } else if (std::find(quitKeys.begin(), quitKeys.end(), pause_ch) != quitKeys.end()) {
                     quitPressed = true;
                     isRunning = false;
                     break;
@@ -125,7 +132,6 @@ void Game::run(const Settings& settings) {
         int ch;
         bool sawLeft = false, sawRight = false, sawSoftDrop = false;
         while ((ch = getch()) != ERR) {
-            const auto& keyBindings = settings.getKeyBindings();
             for (const auto& [action, keys] : keyBindings) {
                 for (int key : keys) {
                     if (ch == key) {
@@ -234,6 +240,7 @@ void Game::run(const Settings& settings) {
 
     if (!quitPressed || Settings::getMode() == "zen") {
         UI::showResultsPage(Settings::getMode(), statistics, gameTime);
+        reset();
     }
 }
 
@@ -304,7 +311,6 @@ void Game::handleInput(const Settings& settings, int ch) {
                 } else if (action == "QUIT") {
                     quitPressed = true;
                     isRunning = false;
-                    reset();
                 } else if (action == "RESTART") {
                     reset();
                 } else if (action == "PAUSE") {
@@ -329,6 +335,10 @@ void Game::processLineClear() {
     auto clearInfo = GameUtils::checkClearConditions(currentPiece, board, lastRotation);
 
     if (clearInfo.lines > 0) {
+        if (Settings::getMode().find("cheese_") == 0) {
+            statistics["cheeseCleared"] += clearInfo.cheeseCleared;
+            cheeseCount += clearInfo.cheeseCleared;
+        }
         statistics["attack"] += GameUtils::calculateAttack(clearInfo, statistics["b2bStreak"], statistics["combo"]);
         statistics["score"] += GameUtils::calculateScore(clearInfo, statistics["b2bStreak"], statistics["combo"]);
         statistics["lines"] += clearInfo.lines;
@@ -368,19 +378,44 @@ void Game::processLineClear() {
         
         std::string currentMode = Settings::getMode();
         if (currentMode.find("sprint_") == 0) {
-            if (currentMode == "sprint_20l" && statistics["lines"] >= 20) {
+            int target = 0;
+            if (currentMode == "sprint_20l") target = 20;
+            else if (currentMode == "sprint_40l") target = 40;
+            else if (currentMode == "sprint_100l") target = 100;
+            if (statistics["lines"] >= target) {
                 isRunning = false;
                 return;
-            } else if (currentMode == "sprint_40l" && statistics["lines"] >= 40) {
-                isRunning = false;
-                return;
-            } else if (currentMode == "sprint_100l" && statistics["lines"] >= 100) {
+            }
+        } else if (currentMode.find("cheese_") == 0) {
+            int target = 0;
+            if (currentMode == "cheese_10l") target = 10;
+            else if (currentMode == "cheese_18l") target = 18;
+            else if (currentMode == "cheese_100l") target = 100;
+            if (statistics["cheeseCleared"] >= target) {
                 isRunning = false;
                 return;
             }
         }
     } else {
+        // combo break
         statistics["combo"] = 0;
+        
+        // regenerate cheese lines
+        if (Settings::getMode().find("cheese_") == 0) {
+            int target = 0;
+            if (Settings::getMode() == "cheese_10l") target = 10;
+            else if (Settings::getMode() == "cheese_18l") target = 18;
+            else if (Settings::getMode() == "cheese_100l") target = 100;
+            // generate cheese lines based on remaining cheese count
+            if (cheeseCount < target - cheeseGenerated) {
+                GameUtils::generateCheeseLines(board, cheeseCount);
+                cheeseGenerated += cheeseCount;
+            } else {
+                GameUtils::generateCheeseLines(board, target - cheeseGenerated);
+                cheeseGenerated = target;
+            }
+            cheeseCount = 0;
+        }
     }
 
     holdAvailable = true;
@@ -503,10 +538,70 @@ void Game::render() {
     UI::renderTetromino(boardwin, currentPiece, cell_width, false);
     wrefresh(boardwin);
 
-    std::string linesSent = "Lines Sent: " + std::to_string(statistics["attack"]);
-    int attack_x = start_x + (win_width - linesSent.size()) / 2;
-    int attack_y = start_y + board_height + 3;
-    mvprintw(attack_y, attack_x, "%s", linesSent.c_str());
+    // gamemode title text
+    std::string mode = Settings::getMode();
+    mode[0] = std::toupper(mode[0]);
+    size_t tmp = 0;
+    // replace after _
+    size_t underscore_pos = mode.find('_');
+    if (underscore_pos != std::string::npos) {
+        // replace min with :00
+        tmp = underscore_pos + 1;
+        while ((tmp = mode.find("min", tmp)) != std::string::npos) {
+            mode.replace(tmp, 3, ":00");
+            tmp += 3;
+        }
+        // replace l with Lines
+        tmp = underscore_pos + 1;
+        while ((tmp = mode.find("l", tmp)) != std::string::npos) {
+            mode.replace(tmp, 1, " Lines");
+            tmp += 6;
+        }
+    }
+    // replace _ with space
+    for (auto& c : mode) {
+        if (c == '_') c = ' ';
+    }
+    int mode_x = start_x + (win_width - (int)mode.size()) / 2;
+    int mode_y = start_y - 1;
+    if (mode_y >= 0) {
+        mvprintw(mode_y, mode_x, "%s", mode.c_str());
+    }
+
+    // main stat
+    std::string mainStat;
+    if (Settings::getMode() == "zen") {
+        // incremental lines instead of target
+        mainStat = "Lines: " + std::to_string(statistics["lines"]);
+    } else if (Settings::getMode().find("sprint_") == 0) {
+        int target = 0;
+        if (Settings::getMode() == "sprint_20l") target = 20;
+        else if (Settings::getMode() == "sprint_40l") target = 40;
+        else if (Settings::getMode() == "sprint_100l") target = 100;
+        int left = std::max(0, target - statistics["lines"]);
+        mainStat = "Lines: " + std::to_string(left);
+    } else if (Settings::getMode().find("blitz_") == 0) {
+        double timeLimit = 0.0;
+        if (Settings::getMode() == "blitz_1min") timeLimit = 60.0;
+        else if (Settings::getMode() == "blitz_2min") timeLimit = 120.0;
+        else if (Settings::getMode() == "blitz_4min") timeLimit = 240.0;
+        double left = std::max(0.0, timeLimit - gameTime);
+        mainStat = "Time: " + UI::formatSeconds(left);
+    } else if (Settings::getMode().find("cheese_") == 0) {
+        int target = 0;
+        if (Settings::getMode() == "cheese_10l") target = 10;
+        else if (Settings::getMode() == "cheese_18l") target = 18;
+        else if (Settings::getMode() == "cheese_100l") target = 100;
+        int left = std::max(0, target - statistics["cheeseCleared"]);
+        mainStat = "Cheese: " + std::to_string(left);
+    }
+    int attack_x = start_x + (win_width - mainStat.size()) / 2;
+    int attack_y = start_y + board_height + 2;
+
+    int clear_len = std::max((int)mainStat.size(), 24);
+    std::string spaces(clear_len, ' ');
+    mvprintw(attack_y, start_x, "%s", spaces.c_str());
+    mvprintw(attack_y, attack_x, "%s", mainStat.c_str());
 
     // hold window
     int hold_x = start_x - box_width - 2;

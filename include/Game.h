@@ -53,8 +53,11 @@ private:
         {"max_b2bStreak", 0},
         {"combo", 0},
         {"max_combo", 0},
-        {"score", 0}
+        {"score", 0},
+        {"cheeseCleared", 0}
     };
+    int cheeseCount;
+    int cheeseGenerated;
     double gameTime;
     double totalPausedDuration;
 
