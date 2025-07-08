@@ -42,13 +42,16 @@
   - [✨ Features](#-features)
   - [🚀 Installation](#-installation)
     - [🍺 Homebrew (Recommended)](#-homebrew-recommended)
-    - [📦 From Source](#-from-source)
+    - [🐧 Linux/macOS](#-linuxmacos)
   - [🎯 Quick Start](#-quick-start)
   - [🎮 Controls](#-controls)
   - [⚙️ Configuration](#️-configuration)
   - [🏗️ Building](#️-building)
     - [Prerequisites](#prerequisites)
     - [Build](#build)
+  - [🧹 Uninstall](#-uninstall)
+    - [🍺 Homebrew](#-homebrew)
+    - [🐧 Linux/macOS](#-linuxmacos-1)
   - [🤝 Contributing](#-contributing)
   - [📄 License](#-license)
 
@@ -82,15 +85,16 @@ Demo vid will exist soontm!
 ### 🍺 Homebrew (Recommended)
 
 ```bash
+# Install
 brew install FinityFly/tap/clitris
+
+# Upgrade
+brew upgrade clitris
 ```
 
-### 📦 From Source
-
+### 🐧 Linux/macOS
 ```bash
-git clone https://github.com/FinityFly/clitris.git
-cd clitris && make
-sudo mv tetris /usr/local/bin/clitris  # optional
+curl -fsSL https://raw.githubusercontent.com/FinityFly/clitris/main/install.sh | bash
 ```
 
 ## 🎯 Quick Start
@@ -131,8 +135,20 @@ Access via `[2] Settings` in the main menu.
 ### Build
 ```bash
 git clone https://github.com/FinityFly/clitris.git
-cd clitris
-make
+cd clitris && make
+sudo mv clitris /usr/local/bin/clitris  # optional
+```
+
+## 🧹 Uninstall
+
+### 🍺 Homebrew
+```bash
+brew uninstall FinityFly/tap/clitris
+```
+
+### 🐧 Linux/macOS
+```bash
+sudo rm /usr/local/bin/clitris
 ```
 
 ## 🤝 Contributing
