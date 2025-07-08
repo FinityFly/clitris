@@ -5,6 +5,9 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <fstream>
+#include <sstream>
+#include <sys/stat.h>
 
 #include "../include/Settings.h"
 
@@ -223,10 +226,73 @@ void Settings::configure() {
         delwin(settingswin);
     }
 
+    saveConfig();
+
     clear();
     refresh();
 }
 
 std::unordered_map<std::string, std::vector<int>> Settings::getKeyBindings() {
     return keyBindings;
+}
+
+std::string Settings::getUserDataPath() {
+#ifdef _WIN32
+    const char* appdata = std::getenv("APPDATA");
+    if (appdata) return std::string(appdata) + "\\clitris\\";
+#elif __APPLE__ || __MACH__
+    const char* home = std::getenv("HOME");
+    if (home) return std::string(home) + "/Library/Application Support/clitris/";
+#else
+    const char* home = std::getenv("HOME");
+    if (home) return std::string(home) + "/.config/clitris/";
+#endif
+    return "./";
+}
+
+void Settings::saveConfig() {
+    std::string path = getUserDataPath();
+#ifdef _WIN32
+    _mkdir(path.c_str());
+#else
+    mkdir(path.c_str(), 0755);
+#endif
+    std::ofstream file(path + "settings.bin", std::ios::binary);
+    if (!file) return;
+
+    file.write(reinterpret_cast<const char*>(&ARR), sizeof(ARR));
+    file.write(reinterpret_cast<const char*>(&DAS), sizeof(DAS));
+    file.write(reinterpret_cast<const char*>(&DCD), sizeof(DCD));
+    file.write(reinterpret_cast<const char*>(&SDF), sizeof(SDF));
+
+    const char* actions[] = {"LEFT", "RIGHT", "ROTATE_CW", "ROTATE_CCW", "FLIP", "HOLD", "SOFT_DROP", "HARD_DROP", "PAUSE", "QUIT", "RESTART"};
+    for (int i = 0; i < 11; ++i) {
+        const auto& keys = keyBindings[actions[i]];
+        int size = keys.size();
+        file.write(reinterpret_cast<const char*>(&size), sizeof(size));
+        for (int k : keys) file.write(reinterpret_cast<const char*>(&k), sizeof(k));
+    }
+    file.close();
+}
+
+void Settings::loadConfig() {
+    std::string path = getUserDataPath();
+    std::ifstream file(path + "settings.bin", std::ios::binary);
+    if (!file) {
+        saveConfig();
+        return;
+    }
+    file.read(reinterpret_cast<char*>(&ARR), sizeof(ARR));
+    file.read(reinterpret_cast<char*>(&DAS), sizeof(DAS));
+    file.read(reinterpret_cast<char*>(&DCD), sizeof(DCD));
+    file.read(reinterpret_cast<char*>(&SDF), sizeof(SDF));
+    const char* actions[] = {"LEFT", "RIGHT", "ROTATE_CW", "ROTATE_CCW", "FLIP", "HOLD", "SOFT_DROP", "HARD_DROP", "PAUSE", "QUIT", "RESTART"};
+    for (int i = 0; i < 11; ++i) {
+        int size = 0;
+        file.read(reinterpret_cast<char*>(&size), sizeof(size));
+        std::vector<int> keys(size);
+        for (int j = 0; j < size; ++j) file.read(reinterpret_cast<char*>(&keys[j]), sizeof(int));
+        keyBindings[actions[i]] = keys;
+    }
+    file.close();
 }

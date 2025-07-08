@@ -18,6 +18,9 @@ public:
         mode = newMode;
     }
 
+    static void saveConfig();
+    static void loadConfig();
+
 private:
     static float ARR; // auto repeat rate
     static float DAS; // delayed auto shift
@@ -27,6 +30,8 @@ private:
     static std::string mode;
 
     static std::unordered_map<std::string, std::vector<int>> keyBindings;
+
+    static std::string getUserDataPath();
 };
 
 #endif

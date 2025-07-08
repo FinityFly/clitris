@@ -42,6 +42,7 @@ int main() {
     Game game;
 
     bool running = true;
+    settings.loadConfig();
 
     while (running) {
         clear();
