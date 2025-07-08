@@ -1,0 +1,23 @@
+# Windows Makefile for clitris (using MinGW and PDCurses)
+# Usage: mingw32-make -f Makefile.windows
+
+CXX = g++
+CXXFLAGS = -Wall -Wextra -std=c++17
+
+SRC = src/main.cpp src/Game.cpp src/GameUtils.cpp src/UI.cpp src/Menu.cpp src/Settings.cpp src/Tetromino.cpp src/SRS.cpp
+OBJ = $(SRC:.cpp=.o)
+TARGET = clitris.exe
+LDFLAGS = -lpdcurses
+
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+clean:
+	del /Q $(OBJ) $(TARGET)
+
+.PHONY: all clean
+
+# Make sure PDCurses is installed and in your MinGW lib/include path.
+# If using vcpkg, add -I<path-to-vcpkg-include> -L<path-to-vcpkg-lib> as needed.
