@@ -13,7 +13,7 @@
 [![Stars](https://img.shields.io/github/stars/FinityFly/clitris?style=for-the-badge)](https://github.com/FinityFly/clitris/stargazers)
 [![Issues](https://img.shields.io/github/issues/FinityFly/clitris?style=for-the-badge)](https://github.com/FinityFly/clitris/issues)
 
-[**🚀 Quick Start**](#installation) • [**📖 Documentation**](#usage) • [**🎮 Demo**](#demo) • [**🤝 Contributing**](#contributing)
+[**🚀 Quick Start**](#-installation) • [**📖 Documentation**](#-controls) • [**🎮 Demo**](#-demo) • [**🤝 Contributing**](#-contributing)
 
 ---
 
@@ -37,9 +37,8 @@
 - [🎮 clitris](#-clitris)
   - [📋 Table of Contents](#-table-of-contents)
   - [🔍 About](#-about)
-    - [Why clitris?](#why-clitris)
+    - [✨ Features](#-features)
   - [🎬 Demo](#-demo)
-  - [✨ Features](#-features)
   - [🚀 Installation](#-installation)
     - [🍺 Homebrew (Recommended)](#-homebrew-recommended)
     - [🐧 Linux/macOS](#-linuxmacos)
@@ -57,28 +56,21 @@
 
 ## 🔍 About
 
-clitris is a professional-grade Tetris implementation for the terminal, featuring modern guideline Tetris and competitive gameplay mechanics.
+clitris is a professional-grade Tetris implementation for the terminal, featuring modern guideline Tetris and competitive gameplay mechanics. I was slightly irritated by the lack of high-quality yet minimal terminal tetris clones and decided to do something about it. Enjoy!
 
-### Why clitris?
+### ✨ Features
 
-- **🎯 Guideline Compliant**: SRS rotation system and official scoring
+- **🎯 Guideline Compliant**: SRS rotation system, official scoring, standard TETR.IO-like mechanics
 - **⚡ Performance Optimized**: 60 FPS gameplay with sub-millisecond input response  
-- **🔧 Highly Configurable**: Professional handling settings (ARR/DAS/DCD/SDF)
-- **📊 Analytics**: Detailed statistics tracking
-- **🎨 Clean Terminal UI**: Minimalist design
+- **🔧 Highly Configurable**: Customizable handling (ARR/DAS/DCD/SDF) and keybind settings
+- **🎮 4 Game Modes**: Sprint, Blitz, Zen, and Cheese Race
+- **🎨 Clean and Modern Terminal UI**: Minimalist guideline tetris design with ghost piece, hold and next piece windows, and live stats display
 
 ## 🎬 Demo
 
 ```
 Demo vid will exist soontm!
 ```
-
-## ✨ Features
-
-- **🎮 Modern Gameplay** - SRS rotation, T-spins, perfect clears, 7-bag randomizer
-- **⚙️ Pro Handling** - Configurable ARR, DAS, DCD, SDF settings
-- **📊 Statistics** - PPS, combos, line clears, B2B tracking
-- **🎨 Clean UI** - Ghost piece, hold system, live stats display
 
 ## 🚀 Installation
 
@@ -123,7 +115,7 @@ clitris  # or ./clitris if built locally
 | **DCD** | DAS Cut Delay | 0ms |
 | **SDF** | Soft Drop Factor | 1ms |
 
-Access via `[2] Settings` in the main menu.
+Access via `[5] Settings` in the main menu.
 
 ## 🏗️ Building
 
