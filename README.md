@@ -56,7 +56,7 @@
 
 ## 🔍 About
 
-clitris is a professional-grade Tetris implementation for the terminal, featuring modern guideline Tetris and competitive gameplay mechanics. I was slightly irritated by the lack of high-quality yet minimal terminal tetris clones and decided to do something about it. Enjoy!
+clitris is a professional-grade Tetris implementation for the terminal, featuring modern guideline Tetris and competitive gameplay mechanics. I was slightly irritated by the lack of high-quality yet lightweight terminal tetris clones and decided to do something about it. Enjoy!
 
 ### ✨ Features
 
@@ -64,7 +64,7 @@ clitris is a professional-grade Tetris implementation for the terminal, featurin
 - **⚡ Performance Optimized**: 60 FPS gameplay with sub-millisecond input response  
 - **🔧 Highly Configurable**: Customizable handling (ARR/DAS/DCD/SDF) and keybind settings
 - **🎮 4 Game Modes**: Sprint, Blitz, Zen, and Cheese Race
-- **🎨 Clean and Modern Terminal UI**: Minimalist guideline tetris design with ghost piece, hold and next piece windows, and live stats display
+- **🎨 Clean and Modern Terminal UI**: Minimalist guideline tetris design with ghost piece, hold/next piece windows, and live stats display
 
 ## 🎬 Demo
 
@@ -97,25 +97,39 @@ clitris  # or ./clitris if built locally
 
 ## 🎮 Controls
 
-| Movement | Keys | Rotation | Keys |
-|----------|------|----------|------|
-| Left | `←` `j` | Rotate CW | `x` |
-| Right | `→` `l` | Rotate CCW | `z` |
-| Soft Drop | `↓` `k` | 180° Rotate | `c` |
-| Hard Drop | `Space` | Hold | `↑` `i` |
+All controls are fully customizable in the in-game settings menu. The default keybinds are:
 
-**System:** `r` Restart • `q` `Esc` Quit
+| Action        | Default Keys         |
+|---------------|---------------------|
+| Move Left     | `←` `j`             |
+| Move Right    | `→` `l`             |
+| Soft Drop     | `↓` `k`             |
+| Hard Drop     | `Space`             |
+| Hold          | `↑` `i`             |
+| Rotate CW     | `x`                 |
+| Rotate CCW    | `z`                 |
+| 180° Rotate   | `c`                 |
+| Pause         | `p`                 |
+| Quit          | `q` `Esc`           |
+| Restart       | `r` `\`            |
+
+You can remap any action to any key (or multiple keys) in the settings menu.
 
 ## ⚙️ Configuration
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| **ARR** | Auto Repeat Rate | 33ms |
-| **DAS** | Delayed Auto Shift | 100ms |
-| **DCD** | DAS Cut Delay | 0ms |
-| **SDF** | Soft Drop Factor | 1ms |
+All handling and keybind settings are saved automatically in a binary file (`settings.bin`) in your user config directory:
+- **macOS:** `~/Library/Application Support/clitris/settings.bin`
+- **Linux:** `~/.config/clitris/settings.bin`
+- **Windows:** `%APPDATA%\clitris\settings.bin`
 
-Access via `[5] Settings` in the main menu.
+| Setting | Description              | Default |
+|---------|--------------------------|---------|
+| **ARR** | Auto Repeat Rate (ms)    | 10      |
+| **DAS** | Delayed Auto Shift (ms)  | 50      |
+| **DCD** | DAS Cut Delay (ms)       | 33      |
+| **SDF** | Soft Drop Factor (ms)    | 1       |
+
+Access the settings via `[5] Settings` in the main menu to change keybinds or handling.
 
 ## 🏗️ Building
 
