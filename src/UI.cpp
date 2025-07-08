@@ -1,4 +1,5 @@
 #include <unordered_map>
+#include <curses.h>
 
 #include "../include/UI.h"
 #include "../include/GameUtils.h"

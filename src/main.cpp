@@ -1,6 +1,6 @@
 #include <locale.h>
 #include <csignal>
-#include <ncurses.h>
+#include <curses.h>
 #include <iostream>
 #include "../include/Game.h"
 #include "../include/Menu.h"

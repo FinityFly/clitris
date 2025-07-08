@@ -1,4 +1,4 @@
-#include <ncurses.h>
+#include <curses.h>
 #include <thread>
 #include <atomic>
 #include <chrono>
@@ -101,7 +101,7 @@ void Game::run(const Settings& settings) {
     auto lastLeft = std::chrono::steady_clock::now();
     auto lastRight = std::chrono::steady_clock::now();
     auto lastSoftDrop = std::chrono::steady_clock::now();
-    bool leftInitial = true, rightInitial = true, softDropInitial = true;
+    bool leftInitial = true, rightInitial = true;
     bool leftDCD = false, rightDCD = false;
     std::unordered_set<int> heldKeys;
     while (isRunning) {
@@ -172,7 +172,7 @@ void Game::run(const Settings& settings) {
 
         if (!sawLeft) { leftHeld = false; leftInitial = true; leftDCD = false; }
         if (!sawRight) { rightHeld = false; rightInitial = true; rightDCD = false; }
-        if (!sawSoftDrop) { softDropHeld = false; softDropInitial = true; }
+        if (!sawSoftDrop) { softDropHeld = false; }
         
         auto now = std::chrono::steady_clock::now();
         auto leftDuration = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastLeft).count();
@@ -219,7 +219,6 @@ void Game::run(const Settings& settings) {
         }
 
         if (softDropHeld) {
-            // if (softDropInitial || softDropDuration >= sdf) { // only using softDropInitial
             if (softDropDuration >= sdf) {
                 Tetromino moved = currentPiece;
                 moved.setY(currentPiece.getY() + 1);
@@ -227,10 +226,7 @@ void Game::run(const Settings& settings) {
                     currentPiece.setY(currentPiece.getY() + 1);
                     lastSoftDrop = now;
                 }
-                softDropInitial = false;
             }
-        } else {
-            softDropInitial = true;
         }
 
         update();

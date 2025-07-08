@@ -1,7 +1,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
-#include <ncurses.h>
+#include <curses.h>
 #include <thread>
 #include <atomic>
 #include <chrono>

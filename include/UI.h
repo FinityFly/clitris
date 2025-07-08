@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include <ncurses.h>
+#include <curses.h>
 #include <unordered_map>
 #include <string>
 
