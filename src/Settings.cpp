@@ -32,6 +32,16 @@ std::unordered_map<std::string, std::vector<int>> Settings::keyBindings = {
     {"RESTART", {114, 92}}           // r key, '\'
 };
 
+std::unordered_map<char, TetrominoStyle> Settings::tetrominoStyles = {
+    {'I', {'x', "cyan"}},
+    {'J', {'x', "blue"}},
+    {'L', {'x', "orange"}},
+    {'O', {'x', "yellow"}},
+    {'S', {'x', "green"}},
+    {'T', {'x', "purple"}},
+    {'Z', {'x', "red"}}
+};
+
 void Settings::configure() {
     clear();
     refresh();
@@ -330,6 +340,14 @@ std::unordered_map<std::string, std::vector<int>> Settings::getKeyBindings() {
     return keyBindings;
 }
 
+TetrominoStyle Settings::getTetrominoStyle(char type) {
+    auto it = tetrominoStyles.find(type);
+    if (it != tetrominoStyles.end()) {
+        return it->second;
+    }
+    return {' ', "white"};
+}
+
 std::string Settings::getUserDataPath() {
 #ifdef _WIN32
     const char* appdata = std::getenv("APPDATA");
@@ -366,6 +384,16 @@ void Settings::saveConfig() {
         file.write(reinterpret_cast<const char*>(&size), sizeof(size));
         for (int k : keys) file.write(reinterpret_cast<const char*>(&k), sizeof(k));
     }
+
+    for (const auto& [tetromino, style] : tetrominoStyles) {
+        char tetromino_char = tetromino;
+        file.write(reinterpret_cast<const char*>(&tetromino_char), sizeof(tetromino_char));
+        file.write(reinterpret_cast<const char*>(&style.character), sizeof(style.character));
+        int color_len = style.color.size();
+        file.write(reinterpret_cast<const char*>(&color_len), sizeof(color_len));
+        file.write(style.color.c_str(), color_len);
+    }
+
     file.close();
 }
 
@@ -388,5 +416,25 @@ void Settings::loadConfig() {
         for (int j = 0; j < size; ++j) file.read(reinterpret_cast<char*>(&keys[j]), sizeof(int));
         keyBindings[actions[i]] = keys;
     }
+
+    tetrominoStyles.clear();
+    while (file.peek() != EOF) {
+        char tetromino_char;
+        TetrominoStyle style;
+        if (file.read(reinterpret_cast<char*>(&tetromino_char), sizeof(tetromino_char))) {
+            file.read(reinterpret_cast<char*>(&style.character), sizeof(style.character));
+            int color_len;
+            file.read(reinterpret_cast<char*>(&color_len), sizeof(color_len));
+            if (color_len > 0 && color_len < 100) { // sanity check
+                char color_buf[100];
+                file.read(color_buf, color_len);
+                style.color = std::string(color_buf, color_len);
+                tetrominoStyles[tetromino_char] = style;
+            }
+        } else {
+            break;
+        }
+    }
+
     file.close();
 }

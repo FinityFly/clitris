@@ -26,8 +26,8 @@ public:
     static void saveConfig();
     static void loadConfig();
 
-    static const std::unordered_map<std::string, TetrominoStyle>& getTetrominoStyles() { return tetrominoStyles; }
-    static void setTetrominoStyle(const std::string& tetromino, const TetrominoStyle& style) {
+    static TetrominoStyle getTetrominoStyle(char type);
+    static void setTetrominoStyle(char tetromino, const TetrominoStyle& style) {
         tetrominoStyles[tetromino] = style;
     }
 
@@ -41,7 +41,7 @@ private:
 
     static std::unordered_map<std::string, std::vector<int>> keyBindings;
 
-    static std::unordered_map<std::string, TetrominoStyle> tetrominoStyles;
+    static std::unordered_map<char, TetrominoStyle> tetrominoStyles;
 
     static std::string getUserDataPath();
 };

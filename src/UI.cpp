@@ -6,10 +6,10 @@
 #include "../include/Settings.h"
 
 void UI::renderBoard(WINDOW* win, const std::vector<std::vector<int>>& board, int board_height, int board_width, int cell_width) {
-    // Only render the bottom 20 rows of the 40-row board (rows 20-39)
-    int start_row = 20; // Skip the top 20 hidden rows
+    // only render the bottom 20 rows of the 40-row board (rows 20-39)
+    int start_row = 20; // skip the top 20 hidden rows
     for (int y = 0; y < board_height; ++y) {
-        int board_y = start_row + y; // Map display row to actual board row
+        int board_y = start_row + y; // map display row to actual board row
         for (int x = 0; x < board_width; ++x) {
             int draw_x = x * cell_width + 1;
             char val = board[board_y][x];
@@ -29,6 +29,9 @@ void UI::renderBoard(WINDOW* win, const std::vector<std::vector<int>>& board, in
 }
 
 void UI::renderTetromino(WINDOW* win, const Tetromino& tetromino, int cell_width, bool ghost) {
+    char type = tetromino.getType();
+    TetrominoStyle style = Settings::getTetrominoStyle(type);
+    char draw_char = ghost ? '.' : style.character;
     int color = tetromino.getColor();
     int px = tetromino.getX();
     int py = tetromino.getY();
@@ -39,7 +42,6 @@ void UI::renderTetromino(WINDOW* win, const Tetromino& tetromino, int cell_width
                 int bx = px + x;
                 int by = py + y - 20; // Adjust for 20-row offset (subtract hidden rows)
                 int draw_x = bx * cell_width + 1;
-                
                 // Only draw if the piece is in the visible area (rows 20-39 of board)
                 if (by >= 0 && by < 20) {
                     if (ghost) {
@@ -48,10 +50,10 @@ void UI::renderTetromino(WINDOW* win, const Tetromino& tetromino, int cell_width
                         mvwaddch(win, by + 1, draw_x + 1, '.');
                         wattroff(win, COLOR_PAIR(color) | A_BOLD);
                     } else {
-                        wattron(win, COLOR_PAIR(color));
-                        mvwaddch(win, by + 1, draw_x, ' ');
-                        mvwaddch(win, by + 1, draw_x + 1, ' ');
-                        wattroff(win, COLOR_PAIR(color));
+                        wattron(win, COLOR_PAIR(color) | A_BOLD);
+                        mvwaddch(win, by + 1, draw_x, draw_char);
+                        mvwaddch(win, by + 1, draw_x + 1, draw_char);
+                        wattroff(win, COLOR_PAIR(color) | A_BOLD);
                     }
                 }
             }
@@ -83,12 +85,17 @@ void UI::renderPieceBox(WINDOW* win, const Tetromino& tetromino, int cell_width)
         int offsetY = (box_height - 3) / 2 + 1; // 3 is default shape size
         int offsetX = (box_width - shapeW * cell_width) / 2;
         int color = tetromino.getColor();
+        
+        char type = tetromino.getType();
+        TetrominoStyle style = Settings::getTetrominoStyle(type);
+        char draw_char = style.character;
+        
         wattron(win, COLOR_PAIR(color));
         for (int y = 0; y < shapeH; ++y) {
             for (int x = 0; x < shapeW; ++x) {
                 if (shape[y][x]) {
                     for (int i = 0; i < cell_width; ++i)
-                        mvwaddch(win, offsetY + y, offsetX + x * cell_width + i, ' ');
+                        mvwaddch(win, offsetY + y, offsetX + x * cell_width + i, draw_char);
                 }
             }
         }
