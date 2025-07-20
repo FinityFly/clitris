@@ -6,6 +6,7 @@
 #include <fstream>
 #include <queue>
 #include <iomanip>
+#include <algorithm>
 
 #include "../include/Game.h"
 #include "../include/GameUtils.h"
@@ -24,7 +25,7 @@ void Game::reset() {
     bag.insert(bag.end(), bag2.begin(), bag2.end());
     currentPiece = bag.front();
     bag.erase(bag.begin());
-    holdPiece = NULL;
+    holdPiece = Tetromino(0);
     holdAvailable = true;
     lastRotation = 0;
     statistics = {

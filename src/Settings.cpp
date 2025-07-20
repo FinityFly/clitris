@@ -143,7 +143,7 @@ void Settings::configure() {
         // separator line
         wattron(settingswin, A_DIM);
         for (int i = 2; i < box_width - 2; ++i) {
-            mvwprintw(settingswin, row, i, "─");
+            mvwprintw(settingswin, row, i, "=");
         }
         wattroff(settingswin, A_DIM);
         row++;

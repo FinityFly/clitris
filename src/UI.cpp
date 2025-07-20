@@ -1,5 +1,6 @@
 #include <unordered_map>
 #include <curses.h>
+#include <cstring>
 
 #include "../include/UI.h"
 #include "../include/GameUtils.h"
