@@ -66,7 +66,6 @@ void Menu::display(int state) {
 
     int term_rows, term_cols;
     getmaxyx(stdscr, term_rows, term_cols);
-
     int start_y = (term_rows - box_height) / 2;
     int start_x = (term_cols - box_width) / 2;
 
@@ -95,7 +94,7 @@ void Menu::display(int state) {
     // separator line
     wattron(menuwin, A_DIM);
     for (int i = 2; i < box_width - 2; i++) {
-        mvwprintw(menuwin, 2, i, "─");
+        mvwprintw(menuwin, 2, i, "=");
     }
     wattroff(menuwin, A_DIM);
 
