@@ -8,8 +8,29 @@
 #include <fstream>
 #include <sstream>
 #include <sys/stat.h>
+#include <cstdint>
+#include <stdexcept>
+
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <direct.h>
+    #define htole32(x) (x)
+    #define le32toh(x) (x)
+#elif defined(__APPLE__)
+    #include <machine/endian.h>
+    #include <libkern/OSByteOrder.h>
+    #define htole32(x) OSSwapHostToLittleInt32(x)
+    #define le32toh(x) OSSwapLittleToHostInt32(x)
+#else
+    #include <endian.h>
+#endif
 
 #include "../include/Settings.h"
+
+// Configuration constants
+static constexpr uint32_t SETTINGS_FORMAT_VERSION = 1;
+static constexpr uint32_t MAX_KEYBIND_SIZE = 100;
+static_assert(sizeof(uint32_t) == 4, "uint32_t must be 4 bytes");
 
 float Settings::ARR = 10.0f; // auto repeat rate (ms)
 float Settings::DAS = 50.0f; // delayed auto shift (ms)  
@@ -398,17 +419,23 @@ void Settings::saveConfig() {
     std::ofstream file(path + "settings.bin", std::ios::binary);
     if (!file) return;
 
+    // write format version
+    uint32_t version = htole32(SETTINGS_FORMAT_VERSION);
+    file.write(reinterpret_cast<const char*>(&version), sizeof(version));
+
     file.write(reinterpret_cast<const char*>(&ARR), sizeof(ARR));
     file.write(reinterpret_cast<const char*>(&DAS), sizeof(DAS));
     file.write(reinterpret_cast<const char*>(&DCD), sizeof(DCD));
     file.write(reinterpret_cast<const char*>(&SDF), sizeof(SDF));
-
     const char* actions[] = {"LEFT", "RIGHT", "ROTATE_CW", "ROTATE_CCW", "FLIP", "HOLD", "SOFT_DROP", "HARD_DROP", "PAUSE", "QUIT", "RESTART"};
     for (int i = 0; i < 11; ++i) {
         const auto& keys = keyBindings[actions[i]];
-        int size = keys.size();
+        uint32_t size = htole32(static_cast<uint32_t>(keys.size()));
         file.write(reinterpret_cast<const char*>(&size), sizeof(size));
-        for (int k : keys) file.write(reinterpret_cast<const char*>(&k), sizeof(k));
+        for (int k : keys) {
+            uint32_t key = htole32(static_cast<uint32_t>(k));
+            file.write(reinterpret_cast<const char*>(&key), sizeof(key));
+        }
     }
 
     file.write(reinterpret_cast<const char*>(&tetrominoCharacter), sizeof(tetrominoCharacter));
@@ -423,20 +450,82 @@ void Settings::loadConfig() {
         saveConfig();
         return;
     }
-    file.read(reinterpret_cast<char*>(&ARR), sizeof(ARR));
-    file.read(reinterpret_cast<char*>(&DAS), sizeof(DAS));
-    file.read(reinterpret_cast<char*>(&DCD), sizeof(DCD));
-    file.read(reinterpret_cast<char*>(&SDF), sizeof(SDF));
-    const char* actions[] = {"LEFT", "RIGHT", "ROTATE_CW", "ROTATE_CCW", "FLIP", "HOLD", "SOFT_DROP", "HARD_DROP", "PAUSE", "QUIT", "RESTART"};
-    for (int i = 0; i < 11; ++i) {
-        int size = 0;
-        file.read(reinterpret_cast<char*>(&size), sizeof(size));
-        std::vector<int> keys(size);
-        for (int j = 0; j < size; ++j) file.read(reinterpret_cast<char*>(&keys[j]), sizeof(int));
-        keyBindings[actions[i]] = keys;
-    }
 
-    file.read(reinterpret_cast<char*>(&tetrominoCharacter), sizeof(tetrominoCharacter));
+    try {
+        // read and validate format version
+        uint32_t version = 0;
+        file.read(reinterpret_cast<char*>(&version), sizeof(version));
+        if (file.gcount() != sizeof(version)) {
+            throw std::runtime_error("Failed to read format version - file truncated");
+        }
+        version = le32toh(version);
+        
+        if (version != SETTINGS_FORMAT_VERSION) {
+            throw std::runtime_error("Unsupported format version " + std::to_string(version) + 
+                                   " (expected " + std::to_string(SETTINGS_FORMAT_VERSION) + ")");
+        }
+
+        // read handling settings with validation
+        file.read(reinterpret_cast<char*>(&ARR), sizeof(ARR));
+        if (file.gcount() != sizeof(ARR)) {
+            throw std::runtime_error("Failed to read ARR setting");
+        }
+        
+        file.read(reinterpret_cast<char*>(&DAS), sizeof(DAS));
+        if (file.gcount() != sizeof(DAS)) {
+            throw std::runtime_error("Failed to read DAS setting");
+        }
+        
+        file.read(reinterpret_cast<char*>(&DCD), sizeof(DCD));
+        if (file.gcount() != sizeof(DCD)) {
+            throw std::runtime_error("Failed to read DCD setting");
+        }
+        
+        file.read(reinterpret_cast<char*>(&SDF), sizeof(SDF));
+        if (file.gcount() != sizeof(SDF)) {
+            throw std::runtime_error("Failed to read SDF setting");
+        }
+
+        // read key bindings with endianness conversion and validation
+        const char* actions[] = {"LEFT", "RIGHT", "ROTATE_CW", "ROTATE_CCW", "FLIP", "HOLD", "SOFT_DROP", "HARD_DROP", "PAUSE", "QUIT", "RESTART"};
+        for (int i = 0; i < 11; ++i) {
+            uint32_t size = 0;
+            file.read(reinterpret_cast<char*>(&size), sizeof(size));
+            if (file.gcount() != sizeof(size)) {
+                throw std::runtime_error("Failed to read key binding size for " + std::string(actions[i]));
+            }
+            size = le32toh(size);
+            
+            // sanity check to prevent excessive memory allocation
+            if (size > MAX_KEYBIND_SIZE) {
+                throw std::runtime_error("Invalid key binding size " + std::to_string(size) + " for " + actions[i]);
+            }
+            
+            std::vector<int> keys(size);
+            for (uint32_t j = 0; j < size; ++j) {
+                uint32_t key = 0;
+                file.read(reinterpret_cast<char*>(&key), sizeof(key));
+                if (file.gcount() != sizeof(key)) {
+                    throw std::runtime_error("Failed to read key " + std::to_string(j) + " for " + actions[i]);
+                }
+                keys[j] = static_cast<int>(le32toh(key));
+            }
+            keyBindings[actions[i]] = keys;
+        }
+
+        // Read tetromino character
+        file.read(reinterpret_cast<char*>(&tetrominoCharacter), sizeof(tetrominoCharacter));
+        if (file.gcount() != sizeof(tetrominoCharacter)) {
+            throw std::runtime_error("Failed to read tetromino character");
+        }
+
+    } catch (const std::exception& e) {
+        std::cerr << "Error loading settings: " << e.what() << std::endl;
+        std::cerr << "Using default settings and regenerating config file" << std::endl;
+        file.close();
+        saveConfig();
+        return;
+    }
 
     file.close();
 }

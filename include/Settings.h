@@ -22,11 +22,11 @@ public:
     static void saveConfig();
     static void loadConfig();
 
-    static char getTetrominoStyle() {
+    static char getTetrominoCharacter() {
         return tetrominoCharacter;
     }
 
-    static void setTetrominoStyle(const char character) {
+    static void setTetrominoCharacter(const char character) {
         tetrominoCharacter = character;
     }
 

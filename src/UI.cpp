@@ -7,7 +7,7 @@
 #include "../include/Settings.h"
 
 void UI::renderBoard(WINDOW* win, const std::vector<std::vector<int>>& board, int board_height, int board_width, int cell_width) {
-    char tetrominoCharacter = Settings::getTetrominoStyle();
+    char tetrominoCharacter = Settings::getTetrominoCharacter();
     // only render the bottom 20 rows of the 40-row board (rows 20-39)
     int start_row = 20; // skip the top 20 hidden rows
     for (int y = 0; y < board_height; ++y) {
@@ -31,7 +31,7 @@ void UI::renderBoard(WINDOW* win, const std::vector<std::vector<int>>& board, in
 }
 
 void UI::renderTetromino(WINDOW* win, const Tetromino& tetromino, int cell_width, bool ghost) {
-    char tetrominoCharacter = Settings::getTetrominoStyle();
+    char tetrominoCharacter = Settings::getTetrominoCharacter();
     char draw_char = ghost ? '.' : tetrominoCharacter;
     int color = tetromino.getColor();
     int px = tetromino.getX();
@@ -86,7 +86,7 @@ void UI::renderPieceBox(WINDOW* win, const Tetromino& tetromino, int cell_width)
         int offsetY = (box_height - 3) / 2 + 1; // 3 is default shape size
         int offsetX = (box_width - shapeW * cell_width) / 2;
         int color = tetromino.getColor();
-        char tetrominoCharacter = Settings::getTetrominoStyle();
+        char tetrominoCharacter = Settings::getTetrominoCharacter();
         
         wattron(win, COLOR_PAIR(color));
         for (int y = 0; y < shapeH; ++y) {
