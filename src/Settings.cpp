@@ -18,6 +18,8 @@ float Settings::SDF = 1.0f; // soft drop factor (ms)
 
 std::string Settings::mode = "zen";
 
+char Settings::tetrominoCharacter = '.';
+
 std::unordered_map<std::string, std::vector<int>> Settings::keyBindings = {
     {"LEFT",    {260, 106}},         // left arrow key, j key
     {"RIGHT",   {261, 108}},         // right arrow key, l key
@@ -32,16 +34,6 @@ std::unordered_map<std::string, std::vector<int>> Settings::keyBindings = {
     {"RESTART", {114, 92}}           // r key, '\'
 };
 
-std::unordered_map<char, TetrominoStyle> Settings::tetrominoStyles = {
-    {'I', {'x', "cyan"}},
-    {'J', {'x', "blue"}},
-    {'L', {'x', "orange"}},
-    {'O', {'x', "yellow"}},
-    {'S', {'x', "green"}},
-    {'T', {'x', "purple"}},
-    {'Z', {'x', "red"}}
-};
-
 void Settings::configure() {
     clear();
     refresh();
@@ -53,7 +45,7 @@ void Settings::configure() {
     std::vector<std::string> settingNames = {
         "LEFT", "RIGHT", "ROTATE_CW", "ROTATE_CCW", "FLIP", 
         "HOLD", "SOFT_DROP", "HARD_DROP", "QUIT", "RESTART",
-        "ARR", "DAS", "DCD", "SDF"
+        "ARR", "DAS", "DCD", "SDF", "TETROMINO_CHAR"
     };
     
     std::vector<std::pair<std::string, float*>> handlingSettings = {
@@ -85,7 +77,7 @@ void Settings::configure() {
     }
     int min_value_width = 18;
     int max_value_width = min_value_width;
-    // precompute max value width for all keybinds/handling
+    // precompute max value width for all keybinds/handling/character
     for (int i = 0; i < 10; i++) {
         auto it = keyBindings.find(settingNames[i]);
         std::string keyStr;
@@ -111,10 +103,13 @@ void Settings::configure() {
         valueStr.erase(valueStr.find_last_not_of('.') + 1, std::string::npos);
         if ((int)valueStr.size() > max_value_width) max_value_width = valueStr.size();
     }
+    // tetromino character setting
+    std::string charStr = std::string(1, tetrominoCharacter);
+    if ((int)charStr.size() > max_value_width) max_value_width = charStr.size();
     // add extra space for input buffer
     max_value_width = std::max(max_value_width, 24);
     int box_width = max_label_width + max_value_width + 16;
-    int box_height = 11 + 10 + 4; // 10 keybinds, 4 handling
+    int box_height = 11 + 10 + 4 + 3; // 10 keybinds, 4 handling, 1 character + headers
     int starty = (term_rows - box_height) / 2;
     int startx = (term_cols - box_width) / 2;
 
@@ -228,6 +223,35 @@ void Settings::configure() {
             mvwprintw(settingswin, row, value_x, "%s", shown_value.c_str());
             row++;
         }
+        row++;
+        // display settings
+        std::string ds_header = "=== Display Settings ===";
+        int ds_header_x = (box_width - (int)ds_header.size()) / 2;
+        mvwprintw(settingswin, row++, ds_header_x, "%s", ds_header.c_str());
+        
+        // tetromino character setting
+        int charSettingIndex = 14; // after 10 keybinds + 4 handling
+        std::string charLabel = "Tetromino Character";
+        std::string charValue;
+        if (insertMode && currentSelection == charSettingIndex) {
+            charValue = "Enter char: [" + insertBuffer + "]";
+        } else {
+            charValue = std::string(1, tetrominoCharacter);
+        }
+        std::string charPrefix = (currentSelection == charSettingIndex) ? "> " : "  ";
+        int char_label_x = 2 + (int)charPrefix.size();
+        int char_value_x = box_width - 2 - max_value_width;
+
+        std::string shown_char_value = charValue;
+        if ((int)shown_char_value.size() > max_value_width) shown_char_value = shown_char_value.substr(0, max_value_width);
+        else shown_char_value.append(max_value_width - shown_char_value.size(), ' ');
+        mvwprintw(settingswin, row, 2, "%s", charPrefix.c_str());
+        wattron(settingswin, (currentSelection == charSettingIndex) ? A_BOLD : A_NORMAL);
+        mvwprintw(settingswin, row, char_label_x, "%s", charLabel.c_str());
+        wattroff(settingswin, (currentSelection == charSettingIndex) ? A_BOLD : A_NORMAL);
+        mvwprintw(settingswin, row, char_value_x, "%s", shown_char_value.c_str());
+        row++;
+        
         wrefresh(settingswin);
         refresh();
     };
@@ -262,13 +286,18 @@ void Settings::configure() {
                         }
                         if (!exists) keyBindings[settingNames[currentSelection]] = newKeys;
                     }
-                } else {
+                } else if (currentSelection < 14) {
                     // handling settings
                     if (!insertBuffer.empty()) {
                         float value = std::stof(insertBuffer);
                         if (value >= 0.1f && value <= 99.0f) {
                             *(handlingSettings[currentSelection - 10].second) = value;
                         }
+                    }
+                } else {
+                    // tetromino character setting
+                    if (!insertBuffer.empty()) {
+                        tetrominoCharacter = insertBuffer[0];
                     }
                 }
                 insertMode = false;
@@ -292,10 +321,15 @@ void Settings::configure() {
                 else if (ch == 259) insertBuffer += "UP ";
                 else if (ch >= 32 && ch <= 126) insertBuffer += (char)ch;
                 else insertBuffer += std::to_string(ch) + " ";
-            } else {
+            } else if (currentSelection < 14) {
                 // handling settings
                 if ((ch >= '0' && ch <= '9') || ch == '.') {
                     insertBuffer += (char)ch;
+                }
+            } else {
+                // tetromino character setting
+                if (ch >= 32 && ch <= 126) {
+                    insertBuffer = std::string(1, (char)ch);
                 }
             }
         } else {
@@ -305,13 +339,13 @@ void Settings::configure() {
                 currentSelection = (currentSelection - 1 + settingNames.size()) % settingNames.size();
             } else if (ch == KEY_DOWN) {
                 currentSelection = (currentSelection + 1) % settingNames.size();
-            } else if (ch == KEY_LEFT && currentSelection >= 10) {
-                // decrease handling by 10
+            } else if (ch == KEY_LEFT && currentSelection >= 10 && currentSelection < 14) {
+                // decrease handling by 5
                 int handlingIndex = currentSelection - 10;
                 float* setting = handlingSettings[handlingIndex].second;
                 *setting = std::max(0.1f, *setting - 5.0f);
-            } else if (ch == KEY_RIGHT && currentSelection >= 10) {
-                // increase handling by 10
+            } else if (ch == KEY_RIGHT && currentSelection >= 10 && currentSelection < 14) {
+                // increase handling by 5
                 int handlingIndex = currentSelection - 10;
                 float* setting = handlingSettings[handlingIndex].second;
                 *setting = std::min(99.0f, *setting + 5.0f);
@@ -338,14 +372,6 @@ void Settings::configure() {
 
 std::unordered_map<std::string, std::vector<int>> Settings::getKeyBindings() {
     return keyBindings;
-}
-
-TetrominoStyle Settings::getTetrominoStyle(char type) {
-    auto it = tetrominoStyles.find(type);
-    if (it != tetrominoStyles.end()) {
-        return it->second;
-    }
-    return {' ', "white"};
 }
 
 std::string Settings::getUserDataPath() {
@@ -385,14 +411,7 @@ void Settings::saveConfig() {
         for (int k : keys) file.write(reinterpret_cast<const char*>(&k), sizeof(k));
     }
 
-    for (const auto& [tetromino, style] : tetrominoStyles) {
-        char tetromino_char = tetromino;
-        file.write(reinterpret_cast<const char*>(&tetromino_char), sizeof(tetromino_char));
-        file.write(reinterpret_cast<const char*>(&style.character), sizeof(style.character));
-        int color_len = style.color.size();
-        file.write(reinterpret_cast<const char*>(&color_len), sizeof(color_len));
-        file.write(style.color.c_str(), color_len);
-    }
+    file.write(reinterpret_cast<const char*>(&tetrominoCharacter), sizeof(tetrominoCharacter));
 
     file.close();
 }
@@ -417,24 +436,7 @@ void Settings::loadConfig() {
         keyBindings[actions[i]] = keys;
     }
 
-    tetrominoStyles.clear();
-    while (file.peek() != EOF) {
-        char tetromino_char;
-        TetrominoStyle style;
-        if (file.read(reinterpret_cast<char*>(&tetromino_char), sizeof(tetromino_char))) {
-            file.read(reinterpret_cast<char*>(&style.character), sizeof(style.character));
-            int color_len;
-            file.read(reinterpret_cast<char*>(&color_len), sizeof(color_len));
-            if (color_len > 0 && color_len < 100) { // sanity check
-                char color_buf[100];
-                file.read(color_buf, color_len);
-                style.color = std::string(color_buf, color_len);
-                tetrominoStyles[tetromino_char] = style;
-            }
-        } else {
-            break;
-        }
-    }
+    file.read(reinterpret_cast<char*>(&tetrominoCharacter), sizeof(tetrominoCharacter));
 
     file.close();
 }

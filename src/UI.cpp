@@ -7,6 +7,7 @@
 #include "../include/Settings.h"
 
 void UI::renderBoard(WINDOW* win, const std::vector<std::vector<int>>& board, int board_height, int board_width, int cell_width) {
+    char tetrominoCharacter = Settings::getTetrominoStyle();
     // only render the bottom 20 rows of the 40-row board (rows 20-39)
     int start_row = 20; // skip the top 20 hidden rows
     for (int y = 0; y < board_height; ++y) {
@@ -15,10 +16,10 @@ void UI::renderBoard(WINDOW* win, const std::vector<std::vector<int>>& board, in
             int draw_x = x * cell_width + 1;
             char val = board[board_y][x];
             if (val != 0) {
-                wattron(win, COLOR_PAIR(val));
+                wattron(win, COLOR_PAIR(val) | A_BOLD);
                 for (int i = 0; i < cell_width; ++i)
-                    mvwaddch(win, y + 1, draw_x + i, ' ');
-                wattroff(win, COLOR_PAIR(val));
+                    mvwaddch(win, y + 1, draw_x + i, tetrominoCharacter);
+                wattroff(win, COLOR_PAIR(val) | A_BOLD);
             } else {
                 wattron(win, A_DIM);
                 for (int i = 0; i < cell_width; ++i)
@@ -30,9 +31,8 @@ void UI::renderBoard(WINDOW* win, const std::vector<std::vector<int>>& board, in
 }
 
 void UI::renderTetromino(WINDOW* win, const Tetromino& tetromino, int cell_width, bool ghost) {
-    char type = tetromino.getType();
-    TetrominoStyle style = Settings::getTetrominoStyle(type);
-    char draw_char = ghost ? '.' : style.character;
+    char tetrominoCharacter = Settings::getTetrominoStyle();
+    char draw_char = ghost ? '.' : tetrominoCharacter;
     int color = tetromino.getColor();
     int px = tetromino.getX();
     int py = tetromino.getY();
@@ -86,17 +86,14 @@ void UI::renderPieceBox(WINDOW* win, const Tetromino& tetromino, int cell_width)
         int offsetY = (box_height - 3) / 2 + 1; // 3 is default shape size
         int offsetX = (box_width - shapeW * cell_width) / 2;
         int color = tetromino.getColor();
-        
-        char type = tetromino.getType();
-        TetrominoStyle style = Settings::getTetrominoStyle(type);
-        char draw_char = style.character;
+        char tetrominoCharacter = Settings::getTetrominoStyle();
         
         wattron(win, COLOR_PAIR(color));
         for (int y = 0; y < shapeH; ++y) {
             for (int x = 0; x < shapeW; ++x) {
                 if (shape[y][x]) {
                     for (int i = 0; i < cell_width; ++i)
-                        mvwaddch(win, offsetY + y, offsetX + x * cell_width + i, draw_char);
+                        mvwaddch(win, offsetY + y, offsetX + x * cell_width + i, tetrominoCharacter);
                 }
             }
         }

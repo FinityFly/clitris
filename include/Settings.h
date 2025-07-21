@@ -4,10 +4,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-struct TetrominoStyle {
-    char character;
-    std::string color;
-};
 
 class Settings {
 public:
@@ -26,9 +22,12 @@ public:
     static void saveConfig();
     static void loadConfig();
 
-    static TetrominoStyle getTetrominoStyle(char type);
-    static void setTetrominoStyle(char tetromino, const TetrominoStyle& style) {
-        tetrominoStyles[tetromino] = style;
+    static char getTetrominoStyle() {
+        return tetrominoCharacter;
+    }
+
+    static void setTetrominoStyle(const char character) {
+        tetrominoCharacter = character;
     }
 
 private:
@@ -41,7 +40,7 @@ private:
 
     static std::unordered_map<std::string, std::vector<int>> keyBindings;
 
-    static std::unordered_map<char, TetrominoStyle> tetrominoStyles;
+    static char tetrominoCharacter;
 
     static std::string getUserDataPath();
 };
