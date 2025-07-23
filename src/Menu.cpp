@@ -10,6 +10,44 @@
 #include "../include/Settings.h"
 
 // Use std::pair<std::string, std::string> for hotkey and label
+#ifdef __linux__
+static std::vector<std::vector<std::pair<std::string, std::string>>> menu_options = {
+    {
+        {"1", "Sprint"},
+        {"2", "Blitz"},
+        {"3", "Zen"},
+        {"4", "Cheese"},
+        {"5", "Settings"},
+        {"q", "Exit"}
+    },
+    {
+        {"1", "20L Sprint"},
+        {"2", "40L Sprint"},
+        {"3", "100L Sprint"},
+        {"q", "Back to Main Menu"}
+    },
+    {
+        {"1", "1:00 Blitz"},
+        {"2", "2:00 Blitz"},
+        {"3", "4:00 Blitz"},
+        {"q", "Back to Main Menu"}
+    },
+    {
+        {"1", "10L Cheese"},
+        {"2", "18L Cheese"},
+        {"3", "100L Cheese"},
+        {"q", "Back to Main Menu"}
+    }
+};
+
+static std::vector<std::string> titles = {
+    "CLITRIS",
+    "SPRINT MODE",
+    "BLITZ MODE",
+    "CHEESE MODE",
+};
+#else
+// macOS/Windows version with emojis
 static std::vector<std::vector<std::pair<std::string, std::string>>> menu_options = {
     {
         {"1", "🚀 Sprint"},
@@ -45,6 +83,7 @@ static std::vector<std::string> titles = {
     "🔥 BLITZ MODE",
     "🧀 CHEESE MODE",
 };
+#endif
 
 void Menu::display(int state) {
     const auto& options = menu_options[state];
@@ -128,7 +167,11 @@ void Menu::display(int state) {
         }
         // flash error
         wattron(menuwin, COLOR_PAIR(7) | A_BOLD);
+#ifdef __linux__
+        std::string error_msg = "Invalid choice, try again.";
+#else
         std::string error_msg = "⚠️  Invalid choice, try again.";
+#endif
         int error_x = (box_width - error_msg.size()) / 2 + 2;
         mvwprintw(menuwin, box_height - 4, error_x, "%s", error_msg.c_str());
         wattroff(menuwin, COLOR_PAIR(7) | A_BOLD);
