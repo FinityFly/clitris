@@ -13,7 +13,7 @@
 [![Stars](https://img.shields.io/github/stars/FinityFly/clitris?style=for-the-badge)](https://github.com/FinityFly/clitris/stargazers)
 [![Issues](https://img.shields.io/github/issues/FinityFly/clitris?style=for-the-badge)](https://github.com/FinityFly/clitris/issues)
 
-[**🚀 Quick Start**](#-installation) • [**📖 Documentation**](#-controls) • [**🎮 Demo**](#-1) • [**🤝 Contributing**](#-contributing)
+[**🚀 Quick Start**](#-installation) • [**📖 Documentation**](#-controls) • [**🤝 Contributing**](#-contributing)
 
 ---
 
