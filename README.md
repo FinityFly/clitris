@@ -13,23 +13,12 @@
 [![Stars](https://img.shields.io/github/stars/FinityFly/clitris?style=for-the-badge)](https://github.com/FinityFly/clitris/stargazers)
 [![Issues](https://img.shields.io/github/issues/FinityFly/clitris?style=for-the-badge)](https://github.com/FinityFly/clitris/issues)
 
-[**🚀 Quick Start**](#-installation) • [**📖 Documentation**](#-controls) • [**🎮 Demo**](#-demo) • [**🤝 Contributing**](#-contributing)
+[**🚀 Quick Start**](#-installation) • [**📖 Documentation**](#-controls) • [**🎮 Demo**](#-1) • [**🤝 Contributing**](#-contributing)
 
 ---
 
-<table width="100%">
-  <tr>
-    <td width="50%" align="center">
-      <img src="assets/thumbnail.png" height="500" alt="clitris gameplay screenshot">
-      <br><strong>🎮 Gameplay</strong>
-    </td>
-    <td width="50%" align="center">
-      <img src="assets/settings.png" height="500" alt="clitris settings interface">
-      <br><strong>⚙️ Settings</strong>
-    </td>
-  </tr>
-</table>
-
+<img src="assets/sprint.gif" alt="clitris sprint gameplay">
+<img src="assets/cheese.gif" alt="clitris cheese gameplay">
 </div>
 
 ## 📋 Table of Contents
@@ -38,7 +27,6 @@
   - [📋 Table of Contents](#-table-of-contents)
   - [🔍 About](#-about)
     - [✨ Features](#-features)
-  - [🎬 Demo](#-demo)
   - [🚀 Installation](#-installation)
     - [🍺 Homebrew (Recommended)](#-homebrew-recommended)
     - [🐧 Linux/macOS](#-linuxmacos)
@@ -56,6 +44,10 @@
 
 ## 🔍 About
 
+<div align="center">
+  <img src="assets/thumbnail.png" height="500" alt="clitris gameplay screenshot">
+</div>
+
 clitris is a professional-grade Tetris implementation for the terminal, featuring modern guideline Tetris and competitive gameplay mechanics. I was slightly irritated by the lack of high-quality yet lightweight terminal tetris clones and decided to do something about it. Enjoy!
 
 ### ✨ Features
@@ -65,12 +57,6 @@ clitris is a professional-grade Tetris implementation for the terminal, featurin
 - **🔧 Highly Configurable**: Customizable handling (ARR/DAS/DCD/SDF) and keybind settings
 - **🎮 4 Game Modes**: Sprint, Blitz, Zen, and Cheese Race
 - **🎨 Clean and Modern Terminal UI**: Minimalist guideline tetris design with ghost piece, hold/next piece windows, and live stats display
-
-## 🎬 Demo
-
-```
-Demo vid will exist soontm!
-```
 
 ## 🚀 Installation
 
