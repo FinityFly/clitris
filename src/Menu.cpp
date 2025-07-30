@@ -109,6 +109,7 @@ void Menu::display(int state) {
     int start_x = (term_cols - box_width) / 2;
 
     choice = -1;
+    int selected_option = 0;
 
     clear();
     refresh();
@@ -122,50 +123,86 @@ void Menu::display(int state) {
     wattroff(outerwin, A_DIM);
     wrefresh(outerwin);
 
-    wattron(menuwin, A_BOLD);
-    box(menuwin, 0, 0);
-    wattroff(menuwin, A_BOLD);
+    // Function to draw the menu with current selection highlighted
+    auto drawMenu = [&]() {
+        werase(menuwin);
+        
+        wattron(menuwin, A_BOLD);
+        box(menuwin, 0, 0);
+        wattroff(menuwin, A_BOLD);
 
-    // title
-    int title_x = (box_width - title.size()) / 2;
-    mvwprintw(menuwin, 1, title_x, "%s", title.c_str());
+        // title
+        int title_x = (box_width - title.size()) / 2;
+        mvwprintw(menuwin, 1, title_x, "%s", title.c_str());
 
-    // separator line
-    wattron(menuwin, A_DIM);
-    for (int i = 2; i < box_width - 2; i++) {
-        mvwprintw(menuwin, 2, i, "=");
-    }
-    wattroff(menuwin, A_DIM);
+        // separator line
+        wattron(menuwin, A_DIM);
+        for (int i = 2; i < box_width - 2; i++) {
+            mvwprintw(menuwin, 2, i, "=");
+        }
+        wattroff(menuwin, A_DIM);
 
-    // menu options
-    for (size_t i = 0; i < options.size(); ++i) {
-        int opt_y = static_cast<int>(i) + 4;
-        mvwprintw(menuwin, opt_y, 4, "[%s]", options[i].first.c_str());
-        mvwprintw(menuwin, opt_y, 8, "%s", options[i].second.c_str());
-    }
+        // menu options
+        for (size_t i = 0; i < options.size(); ++i) {
+            int opt_y = static_cast<int>(i) + 4;
+            
+            if (static_cast<int>(i) == selected_option) {
+                wattron(menuwin, A_BOLD);
+            }
+            
+            mvwprintw(menuwin, opt_y, 4, "[%s]", options[i].first.c_str());
+            mvwprintw(menuwin, opt_y, 8, "%s", options[i].second.c_str());
+            
+            if (static_cast<int>(i) == selected_option) {
+                wattroff(menuwin, A_BOLD);
+            }
+        }
 
-    // bottom instruction
-    wattron(menuwin, A_DIM);
-    std::string instruction = "Press the highlighted key to select";
-    int instr_x = (box_width - instruction.size()) / 2;
-    mvwprintw(menuwin, box_height - 2, instr_x, "%s", instruction.c_str());
-    wattroff(menuwin, A_DIM);
+        // bottom instruction
+        wattron(menuwin, A_DIM);
+        std::string instruction = "[↑/↓]: navigate, [ENTER]: select";
+        int instr_x = (box_width - instruction.size()) / 2;
+        mvwprintw(menuwin, box_height - 2, instr_x, "%s", instruction.c_str());
+        wattroff(menuwin, A_DIM);
 
-    wrefresh(menuwin);
+        wrefresh(menuwin);
+    };
+
+    drawMenu();
 
     nodelay(stdscr, FALSE);
 
     while (true) {
         int ch = getch();
-        for (size_t i = 0; i < options.size(); ++i) {
-            if (ch == options[i].first[0]) {
-                choice = (options[i].first == "q") ? -1 : (int)(i + 1);
-                delwin(menuwin);
-                delwin(outerwin);
-                return;
+        bool selection_made = false;
+        
+        if (ch == KEY_UP) {
+            selected_option = (selected_option - 1 + static_cast<int>(options.size())) % static_cast<int>(options.size());
+            drawMenu();
+            continue;
+        } else if (ch == KEY_DOWN) {
+            selected_option = (selected_option + 1) % static_cast<int>(options.size());
+            drawMenu();
+            continue;
+        } else if (ch == '\n' || ch == KEY_ENTER) {
+            choice = (options[selected_option].first == "q") ? -1 : (selected_option + 1);
+            selection_made = true;
+        } else {
+            for (size_t i = 0; i < options.size(); ++i) {
+                if (ch == options[i].first[0]) {
+                    choice = (options[i].first == "q") ? -1 : (int)(i + 1);
+                    selection_made = true;
+                    break;
+                }
             }
         }
-        // flash error
+        
+        if (selection_made) {
+            delwin(menuwin);
+            delwin(outerwin);
+            return;
+        }
+        
         wattron(menuwin, COLOR_PAIR(7) | A_BOLD);
 #ifdef __linux__
         std::string error_msg = "Invalid choice, try again.";
@@ -177,10 +214,8 @@ void Menu::display(int state) {
         wattroff(menuwin, COLOR_PAIR(7) | A_BOLD);
         wrefresh(menuwin);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        for (int i = 0; i < (int)error_msg.size(); i++) {
-            mvwprintw(menuwin, box_height - 4, error_x + i, " ");
-        }
-        wrefresh(menuwin);
+        
+        drawMenu();
     }
 }
 

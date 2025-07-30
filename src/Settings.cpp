@@ -82,10 +82,6 @@ void Settings::configure() {
     std::string insertBuffer;
     std::vector<int> newKeys;
     
-    auto check_quit = [](int ch) {
-        return ch == 113 || ch == 27; // q or ESC
-    };
-    
     // calculate max label width for key-value alignment
     int max_label_width = 0;
     for (int i = 0; i < 10; i++) {
@@ -165,8 +161,8 @@ void Settings::configure() {
         row++;
 
         // instructions
-        std::string instr1 = "UP/DOWN: navigate, LEFT/RIGHT: adjust (+/-5)";
-        std::string instr2 = "ENTER: edit, ESC/Q: quit" + std::string(insertMode ? " insert mode" : "");
+        std::string instr1 = "[↑/↓]: navigate, [←/→]: adjust (+/-5)";
+        std::string instr2 = "[ENTER]: edit, [Q]: quit" + std::string(insertMode ? " insert mode" : "");
         int instr1_x = (box_width - (int)instr1.size()) / 2;
         int instr2_x = (box_width - (int)instr2.size()) / 2;
         mvwprintw(settingswin, row++, instr1_x, "%s", instr1.c_str());
@@ -282,7 +278,7 @@ void Settings::configure() {
         
         int ch = getch();
         if (insertMode) {
-            if (check_quit(ch)) {
+            if (ch == 113 || ch == 27) {
                 insertMode = false;
                 insertBuffer.clear();
                 newKeys.clear();
@@ -354,7 +350,7 @@ void Settings::configure() {
                 }
             }
         } else {
-            if (check_quit(ch)) {
+            if (ch == 113 || ch == 27) {
                 running = false;
             } else if (ch == KEY_UP) {
                 currentSelection = (currentSelection - 1 + settingNames.size()) % settingNames.size();
