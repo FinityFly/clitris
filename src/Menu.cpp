@@ -132,7 +132,7 @@ void Menu::display(int state) {
         wattroff(menuwin, A_BOLD);
 
         // title
-        int title_x = (box_width - title.size()) / 2;
+        int title_x = (box_width - title.size()) / 2 + 1;
         mvwprintw(menuwin, 1, title_x, "%s", title.c_str());
 
         // separator line
@@ -160,8 +160,8 @@ void Menu::display(int state) {
 
         // bottom instruction
         wattron(menuwin, A_DIM);
-        std::string instruction = "[↑/↓]: navigate, [ENTER]: select";
-        int instr_x = (box_width - instruction.size()) / 2;
+        std::string instruction = "[↑/↓]: navigate - [ENTER]: select";
+        int instr_x = (box_width - instruction.size()) / 2 + 2;
         mvwprintw(menuwin, box_height - 2, instr_x, "%s", instruction.c_str());
         wattroff(menuwin, A_DIM);
 
