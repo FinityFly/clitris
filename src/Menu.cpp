@@ -160,7 +160,11 @@ void Menu::display(int state) {
 
         // bottom instruction
         wattron(menuwin, A_DIM);
+#ifdef __linux__
+        std::string instruction = "[^/v]: navigate - [ENTER]: select";
+#else
         std::string instruction = "[↑/↓]: navigate - [ENTER]: select";
+#endif
         int instr_x = (box_width - instruction.size()) / 2 + 2;
         mvwprintw(menuwin, box_height - 2, instr_x, "%s", instruction.c_str());
         wattroff(menuwin, A_DIM);
