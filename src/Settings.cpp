@@ -148,7 +148,11 @@ void Settings::configure() {
 
         int row = 1;
         // title
+#ifdef __linux__
+        std::string title = "SETTINGS CONFIGURATION";
+#else
         std::string title = "🔧 SETTINGS CONFIGURATION";
+#endif
         int title_x = (box_width - (int)title.size()) / 2 + 1;
         mvwprintw(settingswin, row++, title_x, "%s", title.c_str());
 
@@ -161,9 +165,13 @@ void Settings::configure() {
         row++;
 
         // instructions
+#ifdef __linux__
+        std::string instr1 = "[^/v]: navigate - [</>]: adjust (+/-5)";
+#else
         std::string instr1 = "[↑/↓]: navigate - [←/→]: adjust (+/-5)";
+#endif
         std::string instr2 = "[ENTER]: edit - [Q]: quit" + std::string(insertMode ? " insert mode" : "");
-        int instr1_x = (box_width - (int)instr1.size()) / 2 + 4;
+        int instr1_x = (box_width - (int)instr1.size()) / 2;
         int instr2_x = (box_width - (int)instr2.size()) / 2;
         mvwprintw(settingswin, row++, instr1_x, "%s", instr1.c_str());
         mvwprintw(settingswin, row++, instr2_x, "%s", instr2.c_str());
